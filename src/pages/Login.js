@@ -1,18 +1,20 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Image, SafeAreaView } from "react-native";
+import { View, Text, StyleSheet, Image, SafeAreaView, TouchableOpacity } from "react-native";
 import GradientBackground from "../components/GradientBackground";
 import InputField from "../components/InputFields";
 import ButtonPrimary from "../components/ButtonPrimary";
+import { useAuth } from "../context/AuthContext";
 
-export default function Login({ onLogin }) {
+export default function Login({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { signIn } = useAuth();
 
   return (
     <GradientBackground>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
-          <View style={{ gap: 24, }}>
+          <View style={{ gap: 24 }}>
             <View style={styles.logoContainer}>
               <Image source={require("../../assets/logo.png")} style={styles.logo} />
               <Text style={styles.logo_title}>TreE-Book</Text>
@@ -36,8 +38,10 @@ export default function Login({ onLogin }) {
             </View>
           </View>
           <View>
-            <ButtonPrimary title="Entrar" onPress={onLogin} />
-            <Text style={[styles.text, { padding: 16, textAlign: 'center' }]}>Não tem uma conta?</Text>
+            <ButtonPrimary title="Entrar" onPress={() => signIn(email, password)} />
+            <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+              <Text style={[styles.text, { padding: 16, textAlign: 'center' }]}>Não tem uma conta?</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </SafeAreaView>

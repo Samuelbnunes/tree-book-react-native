@@ -2,27 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView, FlatList, ActivityIndicator, TextInput } from 'react-native';
 import GradientBackground from '../components/GradientBackground';
 import BookCard from '../components/BookCard';
-import { getBookList } from '../services/bookService';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { useCart } from '../context/CartContext';
 
 export default function MyBooks({ navigation }) {
+  const { purchases } = useCart();
   const [myBooks, setMyBooks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [favorites, setFavorites] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  async function fetchData() {
+    // Load purchases from CartContext
     setLoading(true);
-    // No futuro, aqui você buscaria apenas os livros do usuário.
-    // Por enquanto, usamos a mesma lista da tela Home para demonstração.
-    const response = await getBookList();
-    setMyBooks(response);
+    setMyBooks(purchases || []);
     setLoading(false);
-  }
+  }, [purchases]);
 
   const toggleFavorite = (bookId) => {
     setFavorites(prevFavorites => {
@@ -37,7 +32,7 @@ export default function MyBooks({ navigation }) {
   };
 
   const filteredBooks = myBooks.filter(book =>
-    book.title.toLowerCase().includes(searchQuery.toLowerCase())
+    (book.title || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading && myBooks.length === 0) {

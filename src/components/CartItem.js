@@ -9,7 +9,7 @@ export default function CartItem({ item, isSelected, onSelect }) {
         <MaterialIcons
           name={isSelected ? 'check-box' : 'check-box-outline-blank'}
           size={28}
-          color="white"
+          color={isSelected ? '#1599E4' : 'white'}
           style={styles.checkbox}
         />
         <Image source={{ uri: item.image }} style={styles.bookImage} />

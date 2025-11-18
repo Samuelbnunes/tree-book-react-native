@@ -4,28 +4,16 @@ import GradientBackground from '../components/GradientBackground';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import CartItem from '../components/CartItem';
 import ButtonPrimary from '../components/ButtonPrimary';
+import { useCart } from '../context/CartContext';
 
 export default function Cart({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const { cart } = useCart();
   const [selectedItems, setSelectedItems] = useState(new Set());
 
-  // Dados de exemplo para o carrinho
-  const cartItems = [
-    {
-      id: '1',
-      title: 'React Native in Action',
-      author: 'Nader Dabit',
-      image: 'https://picsum.photos/seed/101/200/300',
-      price: 59.90,
-    },
-    {
-      id: '2',
-      title: 'Clean Code: A Handbook of Agile Software Craftsmanship',
-      author: 'Robert C. Martin',
-      image: 'https://picsum.photos/seed/103/200/300',
-      price: 89.90,
-    },
-  ];
+  const filteredCartItems = cart.filter(item =>
+    item.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const toggleSelection = (itemId) => {
     setSelectedItems(prevSelected => {
@@ -39,14 +27,10 @@ export default function Cart({ navigation }) {
     });
   };
 
-  const filteredCartItems = cartItems.filter(item =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   // Calcula o total apenas dos itens selecionados
   const total = filteredCartItems
     .filter(item => selectedItems.has(item.id))
-    .reduce((sum, item) => sum + item.price, 0);
+    .reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
 
   return (
     <GradientBackground>
@@ -66,8 +50,8 @@ export default function Cart({ navigation }) {
           <FlatList
             data={filteredCartItems}
             renderItem={({ item }) => (
-              <CartItem 
-                item={item} 
+              <CartItem
+                item={item}
                 isSelected={selectedItems.has(item.id)}
                 onSelect={() => toggleSelection(item.id)} />
             )}

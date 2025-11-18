@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, Image, StyleSheet, ActivityIndicator, Alert } from "react-native";
 
 import { getBookBy } from "../services/bookService";
 import GradientBackground from "../components/GradientBackground";
-
+import ButtonPrimary from "../components/ButtonPrimary";
+import { useCart } from "../context/CartContext";
 
 export default function BookDetail({ route }) {
   const { url } = route.params.book;
@@ -53,12 +54,34 @@ export default function BookDetail({ route }) {
             <Text style={styles.label}>ISBN:</Text>
             <Text style={styles.value}>{book?.isbn}</Text>
           </View>
+          <View style={{ width: '80%', marginTop: 24 }}>
+            <AddToCartButton book={book} />
+          </View>
         </View>
       </GradientBackground>
     );
   }
 
   return null;
+}
+
+function AddToCartButton({ book }) {
+  const { addToCart } = useCart();
+
+  function handleAdd() {
+    const item = {
+      id: book.id || book.isbn || book.title,
+      title: book.title,
+      image: book.image,
+      author: book.author,
+      price: 0,
+      quantity: 1,
+    };
+    addToCart(item);
+    Alert.alert("Adicionado", "Livro adicionado ao carrinho");
+  }
+
+  return <ButtonPrimary title="Adicionar ao Carrinho" onPress={handleAdd} />;
 }
 
 const styles = StyleSheet.create({
