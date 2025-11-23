@@ -11,31 +11,49 @@ import {
 } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
-import { getBookList } from '../services/bookService';
+import { getBookList, getGenres } from '../services/BookService';
+import { useAuth } from '../context/AuthContext';
 import GradientBackground from '../components/GradientBackground';
 import BookCarousel from '../components/BookCarousel';
 
 export default function BookList({ navigation }) {
-  const [bookList, setBookList] = useState([]);
+  const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const { user, loading: authLoading } = useAuth(); // Pega o usuário e o status de loading do contexto
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    // Só busca as seções se o contexto de autenticação não estiver carregando e tivermos um usuário.
+    if (!authLoading) {
+      fetchSections();
+    }
+  }, [authLoading, user]); // Re-executa quando o status de autenticação ou o usuário mudam
 
-  async function fetchData() {
+  async function fetchSections() {
     setLoading(true);
     try {
-      const response = await getBookList();
-      setBookList(response);
+      const userCurrency = user?.preferedCurrency || 'BRL'; // Usa a moeda do usuário ou 'BRL'
+
+      // 1. Busca a lista de todas as categorias (gêneros)
+      const genres = await getGenres();
+
+      // 2. Para cada categoria, busca os livros correspondentes
+      const promises = genres.map(genre =>
+        getBookList({ genreTag: genre.id, targetCurrency: userCurrency })
+          .then(books => ({ title: genre.description, data: books, genreId: genre.id }))
+      );
+
+      // 3. Espera todas as buscas terminarem
+      const results = await Promise.all(promises);
+      // Filtra seções que não retornaram livros
+      setSections(results.filter(section => section.data.length > 0));
     } catch (e) {
       console.warn('Erro ao buscar livros', e);
     }
     setLoading(false);
   }
 
-  if (loading && bookList.length === 0) {
+  if (loading && sections.length === 0) {
     return (
       <GradientBackground>
         <View style={[styles.container, { justifyContent: 'center' }]}>
@@ -58,12 +76,13 @@ export default function BookList({ navigation }) {
                 placeholderTextColor="rgba(255, 255, 255, 0.5)"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
+                returnKeyType="search"
               />
             </View>
           </View>
 
           <ScrollView horizontal style={styles.tabsContainer} showsHorizontalScrollIndicator={false}>
-            {['E-books', 'Gêneros', 'Os mais vendidos', 'Novidades'].map((tab) => (
+            {['E-books', 'Gêneros'].map((tab) => (
               <TouchableOpacity
                 key={tab}
                 style={[styles.tab, tab === 'E-books' && styles.activeTab]}
@@ -80,7 +99,16 @@ export default function BookList({ navigation }) {
             ))}
           </ScrollView>
           <ScrollView>
-            <BookCarousel navigation={navigation} />
+            {/* Renderiza uma lista vertical de carrosséis, um para cada seção */}
+            {sections.map(section => (
+              <BookCarousel
+                key={section.title}
+                navigation={navigation}
+                title={section.title}
+                books={section.data}
+                genreId={section.genreId}
+              />
+            ))}
           </ScrollView>
         </View>
       </SafeAreaView>
@@ -105,7 +133,7 @@ const styles = StyleSheet.create({
   },
   searchIcon: { marginRight: 10, color: '#fff' },
   searchInput: { flex: 1, height: '100%', color: '#fff', fontSize: 16 },
-  tabsContainer: { height: 48, marginBottom: 5, paddingLeft: 15 },
+  tabsContainer: { flexGrow: 0, height: 48, marginBottom: 15, paddingLeft: 15 },
   tab: {
     paddingHorizontal: 16,
     paddingVertical: 6,

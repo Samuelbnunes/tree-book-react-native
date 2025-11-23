@@ -1,48 +1,65 @@
-import { apiService } from "./apiService";
+import axios from "axios";
 
+// Instância do Axios para o serviço de produtos, apontando para o Gateway
+const productServiceApi = axios.create({
+  baseURL: "http://192.168.100.134:8765", // Apontando para o API Gateway
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
+/**
+ * Busca todas as tags de gênero (categorias) da API.
+ * @returns {Promise<Array>} Uma lista de categorias.
+ */
+export async function getGenres() {
+  const response = await productServiceApi.get('/products/tags');
+  // A API pode retornar os gêneros dentro da propriedade "content" ou diretamente
+  return response.data?.content || response.data || [];
+}
 
-// TODO: trocar pela API de livros do perdo.
-
-
-export async function getBookList(query = 'react native', maxResults = 12) {
-  // Usa a API do Google Books. Query pode ser personalizada.
-  const q = encodeURIComponent(query);
-  const response = await apiService.get(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=${maxResults}`);
-
-  if (!response.data.items) {
+/**
+ * Busca uma lista de livros na API de produtos.
+ * @param {object} options - Opções de busca.
+ * @param {string} options.query - O termo de busca para os livros.
+ * @param {string} options.genreTag - O ID da tag de gênero para filtrar.
+ * @param {string} options.targetCurrency - A moeda para conversão (ex: 'BRL').
+ * @returns {Promise<Array>} Uma lista de livros.
+ */
+export async function getBookList({ query = '', genreTag = '', targetCurrency = 'BRL' }) {
+  // Usa o endpoint GET /products/{targetCurrency} com o parâmetro de busca
+  const response = await productServiceApi.get(`/products/${targetCurrency}`, {
+    params: { search: query, genreTag: genreTag }
+  });
+  
+  // APIs Spring Boot com paginação geralmente retornam a lista dentro da propriedade "content"
+  if (!response.data || !response.data.content || response.data.content.length === 0) {
     return [];
   }
 
-  return response.data.items.map((book) => {
-    const bookInfo = book.volumeInfo || {};
-    const sale = book.saleInfo || {};
-
-    const price = sale.listPrice ? String(sale.listPrice.amount) : undefined;
-
+  // Mapeia a resposta da sua API para o formato que o app espera
+  return response.data.content.map((book) => {
     return {
       id: book.id,
-      title: bookInfo.title || 'Sem título',
-      author: bookInfo.authors ? bookInfo.authors.join(', ') : undefined,
-      image: bookInfo.imageLinks?.thumbnail ? bookInfo.imageLinks.thumbnail.replace('http://', 'https://') : `https://picsum.photos/seed/${book.id}/200/300`,
-      price: price,
-      url: book.selfLink,
+      title: book.title || 'Sem título',
+      author: book.author || 'Autor desconhecido',
+      image: book.coverUrl || `https://picsum.photos/seed/${book.id}/200/300`, // Supondo que o campo seja 'coverUrl'
+      price: String(book.convertedPrice || book.price), // Prioriza o preço convertido
+      // A URL para buscar detalhes do livro, que será usada pela função getBookBy
+      url: `/products/${book.id}/${targetCurrency}`,
     };
   });
 }
 
+/**
+ * Busca os detalhes de um livro específico.
+ * @param {string} url - A URL relativa para buscar o livro (ex: /products/123/BRL).
+ * @returns {Promise<Object>} Os detalhes do livro.
+ */
 export async function getBookBy(url) {
-  const response = await apiService.get(url);
-  const bookData = response.data.volumeInfo;
+  const response = await productServiceApi.get(url);
+  const bookData = response.data;
 
-  const isbn13 = bookData.industryIdentifiers?.find(i => i.type === 'ISBN_13');
-
-  return {
-    id: bookData.id,
-    title: bookData.title,
-    author: bookData.authors ? bookData.authors.join(', ') : 'Autor desconhecido',
-    pages: bookData.pageCount || 'N/A',
-    isbn: isbn13 ? isbn13.identifier : 'N/A',
-    image: bookData.imageLinks?.thumbnail || `https://picsum.photos/seed/${response.data.id}/200/300`,
-  };
+  // A resposta já deve vir no formato correto, mas podemos garantir os campos
+  return bookData;
 }

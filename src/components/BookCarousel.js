@@ -1,13 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { getBookList } from '../services/bookService';
-
-const SECTIONS_CONFIG = [
-  { title: 'Destaques', query: 'react' },
-  { title: 'Os Mais Vendidos', query: 'best sellers' },
-  { title: 'Recomendados para Você', query: 'fiction' },
-];
 
 function CarouselBookCard({ item, onPress }) {
   return (
@@ -19,7 +12,7 @@ function CarouselBookCard({ item, onPress }) {
           {item.author && (
             <Text style={carouselStyles.author} numberOfLines={1} ellipsizeMode="tail">{item.author}</Text>
           )}
-          {item.price ? <Text style={carouselStyles.price}>R$ {item.price}</Text> : null}
+          {item.price ? <Text style={carouselStyles.price}>R$ {parseFloat(item.price).toFixed(2)}</Text> : null}
         </View>
       </View>
     </TouchableOpacity>
@@ -33,32 +26,21 @@ function BookImage({ source }) {
 }
 
 // Componente Principal do Carrossel
-export default function BookCarousel({ navigation }) {
-  const [sections, setSections] = useState([]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function loadSections() {
-      const promises = SECTIONS_CONFIG.map((s) => getBookList(s.query, 12).then((data) => ({ title: s.title, data })));
-      const results = await Promise.all(promises);
-      if (mounted) setSections(results);
-    }
-
-    loadSections();
-    return () => { mounted = false };
-  }, []);
-
-  const renderSection = (section) => (
-    <View key={section.title} style={carouselStyles.sectionContainer}>
+export default function BookCarousel({ navigation, title, books, genreId }) {
+  if (!books || books.length === 0) {
+    return null; // Não renderiza nada se não houver livros
+  }
+  
+  return (
+    <View style={carouselStyles.sectionContainer}>
       <View style={carouselStyles.header}>
-        <Text style={carouselStyles.sectionTitle}>{section.title}</Text>
-        <TouchableOpacity onPress={() => console.log(`Ver todos: ${section.title}`)}>
+        <Text style={carouselStyles.sectionTitle}>{title}</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('AllBookList', { title: title, genreId: genreId })}>
           <MaterialIcons name="arrow-forward" size={24} color="#1599E4" />
         </TouchableOpacity>
       </View>
       <FlatList
-        data={section.data}
+        data={books}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={carouselStyles.itemContainer}>
@@ -67,19 +49,8 @@ export default function BookCarousel({ navigation }) {
         )}
         horizontal
         showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingLeft: 15 }}
       />
-    </View>
-  );
-
-  return (
-    <View style={carouselStyles.listContainer}>
-      {sections.length === 0 ? (
-        <View style={{ paddingHorizontal: 15 }}>
-          <Text style={{ color: '#ccc' }}>Carregando recomendações...</Text>
-        </View>
-      ) : (
-        sections.map(renderSection)
-      )}
     </View>
   );
 }
@@ -106,7 +77,7 @@ const carouselStyles = StyleSheet.create({
   },
   itemContainer: {
     width: 120,
-    marginLeft: 15,
+    marginRight: 15,
   },
   bookContainer: {
     alignItems: 'center',

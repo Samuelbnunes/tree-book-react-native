@@ -1,24 +1,40 @@
-import React from 'react';
-import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import GradientBackground from '../components/GradientBackground';
+import { getGenres } from '../services/BookService';
 
 export default function Genres({ navigation }) {
-  const genres = [
-    'Ficção',
-    'Romance',
-    'Fantasia',
-    'Tecnologia',
-    'Negócios',
-    'Autoajuda',
-    'História',
-    'Biografia',
-    'Infantil',
-    'Poesia',
-  ];
+  const [genres, setGenres] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  function handleSelect(genre) {
-    // Navigate back to BookList and pass the selected genre as a param
-    navigation.navigate('BookList', { genre });
+  useEffect(() => {
+    async function fetchGenres() {
+      try {
+        const data = await getGenres();
+        setGenres(data);
+      } catch (error) {
+        console.error("Falha ao buscar gêneros:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchGenres();
+  }, []);
+
+  function handleSelect(genre) { // genre is an object like { id, description }
+    // Navega para a tela AllBookList, passando o ID e o título do gênero
+    navigation.navigate('AllBookList', { genreId: genre.id, title: genre.description });
+  }
+
+  if (loading) {
+    return (
+      <GradientBackground>
+        <View style={[styles.container, { flex: 1, justifyContent: 'center', alignItems: 'center' }]}>
+          <ActivityIndicator size="large" color="#1599E4" />
+        </View>
+      </GradientBackground>
+    );
   }
 
   return (
@@ -26,9 +42,9 @@ export default function Genres({ navigation }) {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.container}>
           <View style={styles.list}>
-            {genres.map((g) => (
-              <TouchableOpacity key={g} style={styles.item} onPress={() => handleSelect(g)}>
-                <Text style={styles.itemText}>{g}</Text>
+            {genres.map((genre) => (
+              <TouchableOpacity key={genre.id} style={styles.item} onPress={() => handleSelect(genre)}>
+                <Text style={styles.itemText}>{genre.description}</Text>
               </TouchableOpacity>
             ))}
           </View>

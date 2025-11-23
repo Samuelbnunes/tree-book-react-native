@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { signin as apiSignIn, signup as apiSignUp } from "../services/AuthService";
 
 const AuthContext = createContext({});
 
@@ -25,30 +26,46 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function signIn(email, password) {
-    // Simula login: em produção, chame a API e armazene token/usuário reais
-    const simulatedUser = { email };
-    const simulatedToken = "demo-token";
     try {
-      await AsyncStorage.setItem("@auth:user", JSON.stringify(simulatedUser));
-      await AsyncStorage.setItem("@auth:token", simulatedToken);
-      setUser(simulatedUser);
-      setToken(simulatedToken);
+      // Chama a função de login do AuthService
+      const response = await apiSignIn(email, password);
+      // A API retorna um objeto com as propriedades { user, token }
+      const { user: loggedUser, token: accessToken } = response;
+
+      if (loggedUser && accessToken) {
+        await AsyncStorage.setItem("@auth:user", JSON.stringify(loggedUser));
+        await AsyncStorage.setItem("@auth:token", accessToken);
+        setUser(loggedUser);
+        setToken(accessToken);
+      } else {
+        throw new Error("Resposta inválida da API de login.");
+      }
     } catch (error) {
-      console.warn("Failed to save auth to storage", error);
+      console.error("Falha no login:", error);
+      // Re-lança o erro para que a tela possa tratá-lo (ex: mostrar um alerta)
+      throw error;
     }
   }
 
-  async function signup(name, email, password) {
-    // Simula cadastro: em produção, chamar a API para criar usuário
-    const simulatedUser = { name, email };
-    const simulatedToken = "demo-token";
+  async function signup(name, email, password, currency, userType) {
     try {
-      await AsyncStorage.setItem("@auth:user", JSON.stringify(simulatedUser));
-      await AsyncStorage.setItem("@auth:token", simulatedToken);
-      setUser(simulatedUser);
-      setToken(simulatedToken);
+      // Chama a função de cadastro do AuthService
+      const response = await apiSignUp(name, email, password, currency, userType);
+      // Supondo que a resposta contém { user, accessToken }
+      const { user: newUser, accessToken } = response;
+
+      if (newUser && accessToken) {
+        await AsyncStorage.setItem("@auth:user", JSON.stringify(newUser));
+        await AsyncStorage.setItem("@auth:token", accessToken);
+        setUser(newUser);
+        setToken(accessToken);
+      } else {
+        // Se não houver login automático, apenas confirme o sucesso.
+        console.log("Cadastro realizado com sucesso.", response);
+      }
     } catch (error) {
-      console.warn("Failed to save auth to storage", error);
+      console.error("Falha no cadastro:", error);
+      throw error;
     }
   }
 

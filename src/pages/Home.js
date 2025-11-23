@@ -6,7 +6,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAuth } from "../context/AuthContext";
 
 import BookList from "../data/BookList";
-import BookDetail from "../data/BookDetail";
+import BookDetail from "../pages/BookDetail";
 import Community from "../pages/Community";
 import MyBooks from "../pages/MyBooks";
 import CustomHeader from "../components/CustomHeader";
@@ -16,6 +16,7 @@ import Settings from "../pages/Settings";
 import About from './About';
 import Genres from './Genres';
 import PurchaseSuccess from './PurchaseSuccess';
+import AllBookList from './AllBookList';
 
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
@@ -95,6 +96,11 @@ function HomeStackNavigator({ onLogout }) {
         name="Genres"
         component={Genres}
         options={{ ...opts, headerTitle: () => <CustomHeader title="Gêneros" /> }}
+      />
+      <HomeStack.Screen
+        name="AllBookList"
+        component={AllBookList}
+        options={({ route }) => ({ ...opts, headerTitle: () => <CustomHeader title={route.params.title} /> })}
       />
       <HomeStack.Screen
         name="BookDetail"

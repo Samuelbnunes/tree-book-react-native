@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Image, SafeAreaView, Alert, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Image, SafeAreaView, Alert, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
 import GradientBackground from "../components/GradientBackground";
 import InputField from "../components/InputFields";
 import ButtonPrimary from "../components/ButtonPrimary";
@@ -10,6 +10,9 @@ export default function Signup({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [currency, setCurrency] = useState("BRL"); // Estado para a moeda, com 'BRL' como padrão
+  const [userType, setUserType] = useState(1); // 1 para Leitor (padrão), 0 para Editor
+  const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
 
   async function handleSignup() {
@@ -22,49 +25,104 @@ export default function Signup({ navigation }) {
       return;
     }
 
+    // Adiciona uma verificação para a moeda
+    if (!currency) {
+      Alert.alert("Erro", "Por favor, selecione uma moeda preferida.");
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      await signup(name, email, password);
+      await signup(name, email, password, currency, userType); // Passa a moeda e o tipo de usuário
       Alert.alert("Sucesso", "Cadastro realizado com sucesso.", [
         { text: "OK", onPress: () => navigation.navigate("Login") },
       ]);
     } catch (error) {
-      console.warn(error);
-      Alert.alert("Erro", "Não foi possível cadastrar. Tente novamente.");
+      // Extrai a mensagem de erro da resposta da API, se disponível.
+      const errorMessage = error.response?.data?.message || "Não foi possível cadastrar. Tente novamente.";
+      
+      // Loga o erro completo no console para depuração.
+      console.error("Falha no cadastro:", JSON.stringify(error.response?.data || error.message));
+
+      Alert.alert("Erro no Cadastro", errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   }
 
   return (
     <GradientBackground>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          <View style={{ gap: 24 }}>
-            <View style={styles.logoContainer}>
-              <Image source={require("../../assets/logo.png")} style={styles.logo} />
-              <Text style={styles.logo_title}>TreE-Book</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <SafeAreaView style={styles.safeArea}>
+          <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <View style={styles.container}>
+              <View style={{ gap: 24 }}>
+                <View style={styles.logoContainer}>
+                  <Image source={require("../../assets/logo.png")} style={styles.logo} />
+                  <Text style={styles.logo_title}>TreE-Book</Text>
+                </View>
+
+                <Text style={styles.title}>Cadastro</Text>
+
+                <View style={{ gap: 8 }}>
+                  <Text style={styles.text}>nome</Text>
+                  <InputField value={name} onChangeText={setName} />
+                  <Text style={styles.text}>email</Text>
+                  <InputField value={email} onChangeText={setEmail} keyboardType="email-address" />
+                  <Text style={styles.text}>senha</Text>
+                  <InputField value={password} onChangeText={setPassword} secureTextEntry />
+                  <Text style={styles.text}>confirmar senha</Text>
+                  <InputField value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry />
+
+                  <Text style={[styles.text, { marginTop: 16 }]}>moeda preferida</Text>
+                  <View style={styles.currencySelector}>
+                    {['BRL', 'USD', 'EUR'].map(c => (
+                      <TouchableOpacity
+                        key={c}
+                        style={[styles.currencyButton, currency === c && styles.currencyButtonActive]}
+                        onPress={() => setCurrency(c)}
+                      >
+                        <Text style={[styles.currencyButtonText, currency === c && styles.currencyButtonTextActive]}>{c}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <Text style={[styles.text, { marginTop: 16 }]}>tipo de conta</Text>
+                  <View style={styles.currencySelector}>
+                    <TouchableOpacity
+                      style={[styles.currencyButton, userType === 1 && styles.currencyButtonActive]}
+                      onPress={() => setUserType(1)}>
+                      <Text style={[styles.currencyButtonText, userType === 1 && styles.currencyButtonTextActive]}>Leitor</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.currencyButton, userType === 0 && styles.currencyButtonActive]}
+                      onPress={() => setUserType(0)}>
+                      <Text style={[styles.currencyButtonText, userType === 0 && styles.currencyButtonTextActive]}>Editor</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+
+              {/* Ajuste de margem para acomodar o novo campo */}
+              <View style={{ marginTop: 40 }}>
+                <ButtonPrimary title="Cadastrar" onPress={handleSignup} />
+                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                  <Text style={[styles.text, { padding: 16, textAlign: 'center' }]}>Já tem uma conta?</Text>
+                </TouchableOpacity>
+              </View>
             </View>
+          </ScrollView>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
 
-            <Text style={styles.title}>Cadastro</Text>
-
-            <View style={{ gap: 8 }}>
-              <Text style={styles.text}>nome</Text>
-              <InputField value={name} onChangeText={setName} />
-              <Text style={styles.text}>email</Text>
-              <InputField value={email} onChangeText={setEmail} keyboardType="email-address" />
-              <Text style={styles.text}>senha</Text>
-              <InputField value={password} onChangeText={setPassword} secureTextEntry />
-              <Text style={styles.text}>confirmar senha</Text>
-              <InputField value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry />
-            </View>
-          </View>
-
-          <View>
-            <ButtonPrimary title="Cadastrar" onPress={handleSignup} />
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={[styles.text, { padding: 16, textAlign: 'center' }]}>Já tem uma conta?</Text>
-            </TouchableOpacity>
-          </View>
+      {isLoading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#1599E4" />
         </View>
-      </SafeAreaView>
+      )}
     </GradientBackground>
   );
 }
@@ -75,10 +133,12 @@ const styles = StyleSheet.create({
     paddingBottom: 50,
     paddingTop: 50,
   },
+  scrollContainer: {
+    flexGrow: 1
+  },
   container: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: 30,
-    justifyContent: 'space-between',
   },
   logo: {
     width: 32,
@@ -107,4 +167,33 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "white",
   },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(31, 31, 31, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  currencySelector: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    gap: 12,
+    marginTop: 8,
+  },
+  currencyButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  currencyButtonActive: {
+    backgroundColor: '#1599E4',
+    borderColor: '#1599E4',
+  },
+  currencyButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  currencyButtonTextActive: {},
 });

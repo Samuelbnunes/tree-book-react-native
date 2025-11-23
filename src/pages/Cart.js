@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, FlatList } from 'react-native';
 import GradientBackground from '../components/GradientBackground';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import CartItem from '../components/CartItem';
 import ButtonPrimary from '../components/ButtonPrimary';
 import { useCart } from '../context/CartContext';
 

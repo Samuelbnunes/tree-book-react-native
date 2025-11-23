@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TextInput, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TextInput, ScrollView, Image } from 'react-native';
 import GradientBackground from '../components/GradientBackground';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import ReviewCard from '../components/ReviewCard';
 
 export default function Community() {
   const [comment, setComment] = useState('');
@@ -31,6 +30,23 @@ export default function Community() {
       text: 'Mudou a forma como eu escrevo código. Leitura obrigatória para qualquer desenvolvedor que se preze. Simplesmente fantástico!',
     },
   ];
+
+  // Componente para renderizar cada avaliação
+  const ReviewCard = ({ review }) => (
+    <View style={styles.reviewCard}>
+      <Image source={{ uri: review.book.image }} style={styles.reviewBookImage} />
+      <View style={styles.reviewContent}>
+        <Text style={styles.reviewUser}>{review.user.name} avaliou:</Text>
+        <Text style={styles.reviewBookTitle}>{review.book.title}</Text>
+        <View style={styles.ratingContainer}>
+          {[...Array(5)].map((_, i) => (
+            <MaterialIcons key={i} name="star" size={16} color={i < review.rating ? '#FFD700' : '#555'} />
+          ))}
+        </View>
+        <Text style={styles.reviewText}>{review.text}</Text>
+      </View>
+    </View>
+  );
 
   return (
     <GradientBackground>
@@ -85,5 +101,40 @@ const styles = StyleSheet.create({
     height: '100%',
     color: "#fff",
     fontSize: 16,
+  },
+  reviewCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 15,
+    flexDirection: 'row',
+  },
+  reviewBookImage: {
+    width: 60,
+    height: 90,
+    borderRadius: 4,
+    marginRight: 15,
+  },
+  reviewContent: {
+    flex: 1,
+  },
+  reviewUser: {
+    color: '#ccc',
+    fontSize: 14,
+  },
+  reviewBookTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginVertical: 4,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  reviewText: {
+    color: '#ddd',
+    fontSize: 14,
+    lineHeight: 20,
   },
 });
