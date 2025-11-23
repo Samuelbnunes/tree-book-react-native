@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet, ActivityIndicator, Alert, ScrollView } from "react-native";
+import { View, Text, Image, StyleSheet, ActivityIndicator, Alert, ScrollView, TouchableOpacity } from "react-native";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 import GradientBackground from "../components/GradientBackground";
 import ButtonPrimary from "../components/ButtonPrimary";
@@ -19,7 +20,9 @@ export default function BookDetail({ route }) {
     setLoading(true);
     try {
       const response = await getBookBy(url);
-      setBook(response);
+      setBook(prevBook => ({
+        ...prevBook, ...response
+      }));
     } catch (error) {
       console.error("Erro ao buscar detalhes do livro:", error);
       Alert.alert("Erro", "Não foi possível carregar os detalhes do livro.");
@@ -91,22 +94,34 @@ export default function BookDetail({ route }) {
 }
 
 function AddToCartButton({ book }) {
-  const { addToCart } = useCart();
+  const { cart, addToCart, removeSingleItem } = useCart();
+
+  // Verifica se o livro atual já está no carrinho
+  const isInCart = cart?.items?.some(item => item.productId === book.id);
 
   function handleAdd() {
-    const item = {
-      id: book.id || book.isbn || book.title,
-      title: book.title,
-      image: book.imageUrl || book.image, // Garante que a imagem correta vá para o carrinho
-      author: book.author,
-      price: book.price || 0, // Usa o preço do livro
-      quantity: 1,
-    };
-    addToCart(item);
-    Alert.alert("Adicionado", "Livro adicionado ao carrinho");
+    if (!isInCart) {
+      addToCart(book);
+    }
   }
 
-  return <ButtonPrimary title="Adicionar ao Carrinho" onPress={handleAdd} />;
+  if (isInCart) {
+    return (
+      <TouchableOpacity 
+        style={[styles.buttonBase, styles.removeButton]} 
+        onPress={() => removeSingleItem(book.id)}
+      >
+        <MaterialIcons name="remove-shopping-cart" size={24} color="#fff" />
+        <Text style={styles.buttonText}>Remover do Carrinho</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <TouchableOpacity style={[styles.buttonBase, styles.addButton]} onPress={handleAdd}>
+      <Text style={styles.buttonText}>Adicionar ao Carrinho</Text>
+    </TouchableOpacity>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -202,5 +217,26 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'right',
     fontWeight: '600',
+  },
+  // Estilos para os botões de ação
+  buttonBase: {
+    height: 54,
+    borderRadius: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: 'row',
+    gap: 10,
+  },
+  addButton: {
+    backgroundColor: "#1599E4",
+  },
+  removeButton: {
+    backgroundColor: "#dd3047ff", // Um vermelho/rosa para indicar remoção
+  },
+  buttonText: {
+    fontFamily: "Poppins",
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });

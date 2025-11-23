@@ -43,7 +43,7 @@ export async function getBookList({ query = '', genreTag = '', targetCurrency = 
       id: book.id,
       title: book.title || 'Sem título',
       author: book.author || 'Autor desconhecido',
-      image: book.coverUrl || `https://picsum.photos/seed/${book.id}/200/300`, // Supondo que o campo seja 'coverUrl'
+      image: book.coverUrl ? book.coverUrl.replace(/ /g, '%20') : `https://picsum.photos/seed/${book.id}/200/300`,
       price: String(book.convertedPrice || book.price), // Prioriza o preço convertido
       // A URL para buscar detalhes do livro, que será usada pela função getBookBy
       url: `/products/${book.id}/${targetCurrency}`,
@@ -60,6 +60,9 @@ export async function getBookBy(url) {
   const response = await productServiceApi.get(url);
   const bookData = response.data;
 
-  // A resposta já deve vir no formato correto, mas podemos garantir os campos
-  return bookData;
+  // Garante que o objeto retornado tenha a propriedade 'image' formatada corretamente.
+  return {
+    ...bookData,
+    image: bookData.coverUrl ? bookData.coverUrl.replace(/ /g, '%20') : `https://picsum.photos/seed/${bookData.id}/200/300`,
+  };
 }
