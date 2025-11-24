@@ -1,45 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, FlatList, ActivityIndicator, TextInput } from 'react-native';
+import { View, StyleSheet, SafeAreaView, FlatList, ActivityIndicator, TextInput, Text, TouchableOpacity, Image } from 'react-native';
 import GradientBackground from '../components/GradientBackground';
-import BookCard from '../components/BookCard';
+import BookListItem from '../components/BookListItem';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { useInventory } from '../context/InventoryContext';
 
 export default function MyBooks({ navigation }) {
-  const { purchases } = useCart();
-  const [myBooks, setMyBooks] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [favorites, setFavorites] = useState(new Set());
+  const { user } = useAuth();
+  const { inventory: myBooks, loading, fetchInventory, toggleFavorite } = useInventory();
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBookIds, setSelectedBookIds] = useState(new Set());
 
   useEffect(() => {
-    // Load purchases from CartContext
-    setLoading(true);
-    setMyBooks(purchases || []);
-    setLoading(false);
-  }, [purchases]);
-
-  const toggleFavorite = (bookId) => {
-    setFavorites(prevFavorites => {
-      const newFavorites = new Set(prevFavorites);
-      if (newFavorites.has(bookId)) {
-        newFavorites.delete(bookId);
-      } else {
-        newFavorites.add(bookId);
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (user) {
+        fetchInventory();
       }
-      return newFavorites;
     });
-  };
+    return unsubscribe;
+  }, [navigation, user]);
 
   const filteredBooks = myBooks.filter(book =>
-    (book.title || '').toLowerCase().includes(searchQuery.toLowerCase())
+    book.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (loading && myBooks.length === 0) {
+  const selectionMode = selectedBookIds.size > 0;
+  const areAllSelected = selectedBookIds.size === filteredBooks.length && filteredBooks.length > 0;
+
+  const handleSelection = (bookId) => {
+    const newSelectedIds = new Set(selectedBookIds);
+    if (newSelectedIds.has(bookId)) {
+      newSelectedIds.delete(bookId);
+    } else {
+      newSelectedIds.add(bookId);
+    }
+    setSelectedBookIds(newSelectedIds);
+  };
+
+  const handleToggleSelectAll = () => {
+    if (areAllSelected) {
+      setSelectedBookIds(new Set());
+    } else {
+      setSelectedBookIds(new Set(filteredBooks.map(b => b.id)));
+    }
+  };
+
+  // TODO: Implementar a lógica para adicionar marcadores aos livros selecionados
+  const handleAddBookmarksToSelected = () => { };
+
+  if (loading) {
     return (
       <GradientBackground>
         <View style={[styles.container, { justifyContent: "center" }]}>
-          <ActivityIndicator size={"large"} color={"#fff"} />
+          <ActivityIndicator size={"large"} color={"#1599E4"} />
         </View>
       </GradientBackground>
     );
@@ -60,18 +74,43 @@ export default function MyBooks({ navigation }) {
             />
           </View>
 
+          <TouchableOpacity style={styles.manageBookmarksButton} onPress={() => navigation.navigate('BookmarkList')}>
+            <MaterialIcons name="bookmark-border" size={20} color="#1599E4" />
+            <Text style={styles.manageBookmarksText}>Marcadores</Text>
+          </TouchableOpacity>
+
+          {selectionMode && (
+            <View style={styles.selectionHeader}>
+              <TouchableOpacity style={styles.headerButton} onPress={handleToggleSelectAll}>
+                <MaterialIcons name={areAllSelected ? 'check-box' : 'check-box-outline-blank'} size={24} color="white" />
+                <Text style={styles.headerButtonText}>Selecionar Tudo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.headerButton} onPress={handleAddBookmarksToSelected}>
+                <MaterialIcons name="bookmark-add" size={24} color="#1599E4" />
+                <Text style={styles.headerButtonText}>Adicionar Marcadores</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <FlatList
             data={filteredBooks}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
-              <BookCard
-                book={item} 
-                onPress={() => navigation.navigate('Home', { screen: 'BookDetail', params: { book: item } })}
-                onFavorite={() => toggleFavorite(item.id)}
-                isFavorite={favorites.has(item.id)}
+              <BookListItem
+                item={item}
+                selectionMode={selectionMode}
+                isSelected={selectedBookIds.has(item.id)}
+                onSelect={() => handleSelection(item.id)}
+                onPress={() => navigation.navigate('BookDetail', { book: item })}
+                onToggleFavorite={() => toggleFavorite(item.id)}
               />
             )}
-            numColumns={2}
+            ListEmptyComponent={
+              !loading && (
+                <Text style={styles.emptyText}>Você ainda não possui livros.</Text>
+              )
+            }
+            contentContainerStyle={styles.listContent}
           />
         </View>
       </SafeAreaView>
@@ -99,6 +138,23 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.1)",
     marginBottom: 15,
   },
+  manageBookmarksButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    marginBottom: 15,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(21, 153, 228, 0.1)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(21, 153, 228, 0.3)',
+  },
+  manageBookmarksText: {
+    color: '#1599E4',
+    marginLeft: 8,
+    fontWeight: 'bold',
+  },
   searchIcon: {
     marginRight: 10,
   },
@@ -107,5 +163,29 @@ const styles = StyleSheet.create({
     height: '100%',
     color: "#fff",
     fontSize: 16,
+  },
+  emptyText: {
+    color: '#ccc',
+    textAlign: 'center',
+    marginTop: 50,
+    fontSize: 16,
+  },
+  listContent: {
+    paddingHorizontal: 10,
+  },
+  selectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+    paddingHorizontal: 10,
+  },
+  headerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerButtonText: {
+    color: 'white',
+    marginLeft: 8,
   },
 });

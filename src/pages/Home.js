@@ -4,7 +4,6 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAuth } from "../context/AuthContext";
-
 import BookList from "../data/BookList";
 import BookDetail from "../pages/BookDetail";
 import Community from "../pages/Community";
@@ -15,6 +14,7 @@ import GradientBackground from "../components/GradientBackground";
 import Settings from "../pages/Settings";
 import About from './About';
 import Genres from './Genres';
+import BookmarkList from './BookmarkList';
 import PurchaseSuccess from './PurchaseSuccess';
 import AllBookList from './AllBookList';
 
@@ -71,6 +71,15 @@ function MyBooksStackNavigator() {
   return (
     <MyBooksStack.Navigator screenOptions={{ contentStyle: { backgroundColor: 'transparent' } }}>
       <MyBooksStack.Screen name="MyBooksList" component={MyBooks} options={{ ...opts, headerTitle: () => <CustomHeader title="Meus Livros" /> }} />
+      <MyBooksStack.Screen name="BookmarkList" component={BookmarkList} options={{ ...opts, headerTitle: () => <CustomHeader title="Marcadores" /> }} />
+      <MyBooksStack.Screen
+        name="BookDetail"
+        component={BookDetail}
+        options={{
+          ...opts,
+          title: "Detalhes do Livro",
+        }}
+      />
     </MyBooksStack.Navigator>
   );
 }

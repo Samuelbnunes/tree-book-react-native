@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, ScrollView, Image } from 'react-native';
 import GradientBackground from '../components/GradientBackground';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { getCoverSource } from '../services/ImageService';
 
 export default function Community() {
   const [comment, setComment] = useState('');
@@ -11,21 +12,21 @@ export default function Community() {
     {
       id: '1',
       user: { name: 'Ana' },
-      book: { title: 'React Native in Action', image: 'https://picsum.photos/seed/101/200/300' },
+      book: { title: 'React Native in Action', imageUrl: 'https://picsum.photos/seed/101/200/300' },
       rating: 5,
       text: 'Este livro é incrível! Me ajudou a entender conceitos complexos de forma muito clara. Recomendo a todos que estão começando.',
     },
     {
       id: '2',
       user: { name: 'Bruno' },
-      book: { title: 'JavaScript: The Good Parts', image: 'https://picsum.photos/seed/102/200/300' },
+      book: { title: 'JavaScript: The Good Parts', imageUrl: 'https://picsum.photos/seed/102/200/300' },
       rating: 4,
       text: 'Um clássico indispensável. Embora um pouco antigo, os fundamentos que ele ensina são atemporais e essenciais.',
     },
     {
       id: '3',
       user: { name: 'Carla' },
-      book: { title: 'Clean Code', image: 'https://picsum.photos/seed/103/200/300' },
+      book: { title: 'Clean Code', imageUrl: 'https://picsum.photos/seed/103/200/300' },
       rating: 5,
       text: 'Mudou a forma como eu escrevo código. Leitura obrigatória para qualquer desenvolvedor que se preze. Simplesmente fantástico!',
     },
@@ -34,7 +35,7 @@ export default function Community() {
   // Componente para renderizar cada avaliação
   const ReviewCard = ({ review }) => (
     <View style={styles.reviewCard}>
-      <Image source={{ uri: review.book.image }} style={styles.reviewBookImage} />
+      <Image source={getCoverSource(review.book)} style={styles.reviewBookImage} />
       <View style={styles.reviewContent}>
         <Text style={styles.reviewUser}>{review.user.name} avaliou:</Text>
         <Text style={styles.reviewBookTitle}>{review.book.title}</Text>

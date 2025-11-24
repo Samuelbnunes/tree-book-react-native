@@ -1,12 +1,13 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { getCoverSource } from "../services/ImageService";
 
 export default function BookCard({ book, onPress, onFavorite, isFavorite }) {
   return (
     <View style={styles.card}>
       <TouchableOpacity onPress={onPress}>
-        <Image source={{ uri: book.image }} style={styles.image} />
+        <Image source={getCoverSource(book)} style={styles.image} />
         <Text style={styles.name}>{book.title}</Text>
       </TouchableOpacity>
       {onFavorite && (

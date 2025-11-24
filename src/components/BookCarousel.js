@@ -1,12 +1,16 @@
 import React from "react";
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { getCoverSource } from "../services/ImageService";
 
 function CarouselBookCard({ item, onPress }) {
   return (
     <TouchableOpacity style={carouselStyles.card} onPress={onPress} activeOpacity={0.85}>
       <View style={carouselStyles.bookContainer}>
-        <BookImage source={item.image} />
+        <Image
+          source={getCoverSource(item)}
+          style={carouselStyles.image}
+        />
         <View style={carouselStyles.textContainerBelow}>
           <Text style={carouselStyles.title} numberOfLines={2}>{item.title}</Text>
           {item.author && (
@@ -19,16 +23,9 @@ function CarouselBookCard({ item, onPress }) {
   );
 }
 
-// Small helper to render image with fixed height
-function BookImage({ source }) {
-  const imgSource = typeof source === 'string' ? { uri: source } : source;
-  return <Image source={imgSource} style={carouselStyles.image} resizeMode="cover" />;
-}
-
-// Componente Principal do Carrossel
 export default function BookCarousel({ navigation, title, books, genreId }) {
   if (!books || books.length === 0) {
-    return null; // Não renderiza nada se não houver livros
+    return null;
   }
   
   return (
@@ -86,7 +83,6 @@ const carouselStyles = StyleSheet.create({
     width: '100%',
     height: 150,
     borderRadius: 6,
-    backgroundColor: '#222',
   },
   textContainerBelow: {
     width: '100%',

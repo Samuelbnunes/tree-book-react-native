@@ -16,7 +16,10 @@ export default function PurchaseSuccess({ navigation }) {
           <View style={styles.buttonContainer}>
             <ButtonPrimary 
               title="Ver Meus Livros" 
-              onPress={() => navigation.navigate('Meus Livros')} 
+              onPress={() => {
+                navigation.navigate('Meus Livros');
+                navigation.popToTop();
+              }} 
             />
           </View>
         </View>

@@ -3,28 +3,27 @@ import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "./AuthContext";
 import * as CartService from "../services/CartService";
+import * as InventoryService from "../services/InventoryService";
+import { useInventory } from "./InventoryContext";
 
 const CartContext = createContext({});
 
 export function CartProvider({ children }) {
   const { user, token } = useAuth();
-  const [cart, setCart] = useState(null); // Inicia como null para indicar que não foi carregado
+  const { fetchInventory } = useInventory();
+  const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(false);
   const [purchases, setPurchases] = useState([]);
   const PURCHASES_KEY = "@cart:purchases";
 
-  // Carrega o carrinho da API quando o usuário faz login
   useEffect(() => {
-    // Garante que a busca só ocorra quando ambos, token e user, estiverem disponíveis.
     if (token && user) {
-      fetchCart(user); // Passa o usuário ao carregar inicialmente
+      fetchCart(user);
     } else {
-      // Limpa o carrinho se não houver token (logout)
       setCart(null);
     }
-  }, [token, user]); // Adiciona 'user' como dependência para evitar race conditions.
+  }, [token, user]);
 
-  // Carrega as compras salvas localmente (isso pode ser movido para uma API no futuro)
   useEffect(() => {
     async function loadPurchases() {
       try {
@@ -37,7 +36,6 @@ export function CartProvider({ children }) {
     loadPurchases();
   }, []);
 
-  // Persiste as compras no armazenamento local
   useEffect(() => {
     async function persistPurchases() {
       try {
@@ -58,7 +56,10 @@ export function CartProvider({ children }) {
       const userCurrency = currentUser?.preferedCurrency || 'BRL';
       const response = await CartService.getCart(userCurrency);
       const formattedCart = {
-        items: response.items?.content || [],
+        items: (response.items?.content || []).map(item => ({
+          ...item,
+          id: item.productId,
+        })),
         total: response.totalValue || 0,
       };
       setCart(formattedCart);
@@ -74,7 +75,6 @@ export function CartProvider({ children }) {
     try {
       setLoading(true);
       await CartService.addItemToCart(product.id);
-      // Após adicionar, busca o carrinho atualizado para garantir consistência e preços convertidos.
       await fetchCart(user);
       Alert.alert("Adicionado", `${product.title} foi adicionado ao carrinho.`);
     } catch (error) {
@@ -89,10 +89,8 @@ export function CartProvider({ children }) {
     try {
       setLoading(true);
       const userCurrency = user?.preferedCurrency || 'BRL';
-      // A API alterna a seleção, então apenas chamamos e atualizamos o estado
       await CartService.toggleItemSelection(productId, userCurrency);
-      // Recarrega o carrinho para obter o estado mais recente
-      await fetchCart(user); // Passa o usuário atual
+      await fetchCart(user);
     } catch (error) {
       console.error("Erro ao selecionar item:", error.response?.data || error.message);
       Alert.alert("Erro", "Não foi possível atualizar o item.");
@@ -105,20 +103,22 @@ export function CartProvider({ children }) {
     try {
       setLoading(true);
       const purchasedItems = await CartService.checkout();
+
       if (purchasedItems && purchasedItems.length > 0) {
-        // Adiciona os itens comprados à lista local de compras
+        const productIds = purchasedItems.map(item => item.productId);
+        await InventoryService.addBooksToInventory(productIds);
+        await fetchInventory();
         setPurchases(prev => [...prev, ...purchasedItems.filter(item => !prev.find(p => p.id === item.id))]);
-        // Limpa o carrinho localmente
         setCart({ items: [], total: 0 });
-        return true; // Indica sucesso
+        return true;
       } else {
         Alert.alert("Atenção", "Nenhum item selecionado para compra.");
-        return false; // Indica que nada foi comprado
+        return false;
       }
     } catch (error) {
       console.error("Erro ao finalizar compra:", error.response?.data || error.message);
       Alert.alert("Erro", "Não foi possível finalizar a compra.");
-      return false; // Indica falha
+      return false;
     } finally {
       setLoading(false);
     }
@@ -126,21 +126,20 @@ export function CartProvider({ children }) {
 
   async function toggleSelectAll() {
     if (!cart || !cart.items || cart.items.length === 0) {
-      return; // Não há itens para selecionar
+      return;
     }
     setLoading(true);
     try {
       const userCurrency = user?.preferedCurrency || 'BRL';
-      // Verifica se todos os itens já estão selecionados
       const areAllSelected = cart.items.every(item => item.selected);
 
-      // Cria uma lista de promessas para alternar a seleção de cada item necessário
+
       const togglePromises = cart.items
-        .filter(item => (areAllSelected ? item.selected : !item.selected)) // Se todos estão selecionados, desmarca todos. Senão, marca os que não estão.
+        .filter(item => (areAllSelected ? item.selected : !item.selected))
         .map(item => CartService.toggleItemSelection(item.productId, userCurrency));
 
       await Promise.all(togglePromises);
-      await fetchCart(user); // Busca o estado final do carrinho
+      await fetchCart(user);
     } catch (error) {
       console.error("Erro ao selecionar todos os itens:", error);
       Alert.alert("Erro", "Não foi possível atualizar a seleção de todos os itens.");
@@ -168,11 +167,10 @@ export function CartProvider({ children }) {
         {
           text: "Remover",
           style: "destructive",
-          // A lógica de remoção agora fica dentro do 'onPress' do botão de confirmação
           onPress: async () => {
             setLoading(true);
             await CartService.removeSelectedItems();
-            await fetchCart(user); // Busca o carrinho atualizado
+            await fetchCart(user);
             setLoading(false);
           },
         },
@@ -184,26 +182,22 @@ export function CartProvider({ children }) {
     if (!cart || !cart.items) return;
 
     const itemToRemove = cart.items.find(item => item.productId === productIdToRemove);
-    if (!itemToRemove) return; // Item não está no carrinho
+    if (!itemToRemove) return;
 
     setLoading(true);
     try {
       const userCurrency = user?.preferedCurrency || 'BRL';
 
-      // Garante que o item a ser removido esteja selecionado
       if (!itemToRemove.selected) {
         await CartService.toggleItemSelection(productIdToRemove, userCurrency);
       }
 
-      // Desmarca todos os outros itens para que não sejam removidos acidentalmente
       const otherSelectedItems = cart.items.filter(item => item.selected && item.productId !== productIdToRemove);
       const deselectPromises = otherSelectedItems.map(item => CartService.toggleItemSelection(item.productId, userCurrency));
       await Promise.all(deselectPromises);
 
-      // Agora, com apenas o item desejado selecionado, remove-o
       await CartService.removeSingleItem();
 
-      // Busca o estado final do carrinho
       await fetchCart(user);
       Alert.alert("Removido", "O livro foi removido do carrinho.");
     } catch (error) {

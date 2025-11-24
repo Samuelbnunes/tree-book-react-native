@@ -13,6 +13,8 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { getBookList, getGenres } from '../services/BookService';
 import { useAuth } from '../context/AuthContext';
+import { useInventory } from '../context/InventoryContext';
+import { useImage } from '../context/ImageContext'; // Importa o hook do novo contexto
 import GradientBackground from '../components/GradientBackground';
 import BookCarousel from '../components/BookCarousel';
 
@@ -21,6 +23,8 @@ export default function BookList({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { user, loading: authLoading } = useAuth(); // Pega o usuário e o status de loading do contexto
+  const { enrichBooksWithInventoryData } = useInventory();
+  const { preloadImages } = useImage(); // Pega a função de pré-carregamento
 
   useEffect(() => {
     // Só busca as seções se o contexto de autenticação não estiver carregando e tivermos um usuário.
@@ -40,20 +44,28 @@ export default function BookList({ navigation }) {
       // 2. Para cada categoria, busca os livros correspondentes
       const promises = genres.map(genre =>
         getBookList({ genreTag: genre.id, targetCurrency: userCurrency })
-          .then(books => ({ title: genre.description, data: books, genreId: genre.id }))
+          .then(books => {
+            // Enriquece os livros com dados do inventário (favoritos, marcadores)
+            const enrichedBooks = enrichBooksWithInventoryData(books);
+            return { title: genre.description, data: enrichedBooks, genreId: genre.id };
+          })
       );
 
       // 3. Espera todas as buscas terminarem
       const results = await Promise.all(promises);
       // Filtra seções que não retornaram livros
       setSections(results.filter(section => section.data.length > 0));
+
+      // Inicia o pré-carregamento das imagens em segundo plano
+      const allBooks = results.flatMap(section => section.data);
+      preloadImages(allBooks);
     } catch (e) {
       console.warn('Erro ao buscar livros', e);
     }
     setLoading(false);
   }
 
-  if (loading && sections.length === 0) {
+  if ((loading || authLoading) && sections.length === 0) {
     return (
       <GradientBackground>
         <View style={[styles.container, { justifyContent: 'center' }]}>

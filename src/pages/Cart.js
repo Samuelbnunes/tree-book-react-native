@@ -59,10 +59,10 @@ export default function Cart({ navigation }) {
               <CartItem
                 item={item}
                 isSelected={item.selected}
-                onSelect={() => toggleSelection(item.productId)}
+                onSelect={() => toggleSelection(item.id)}
               />
             )}
-            keyExtractor={item => item.productId.toString()}
+            keyExtractor={item => item.id.toString()}
             style={styles.list}
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={

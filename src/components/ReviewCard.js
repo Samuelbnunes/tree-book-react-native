@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { getCoverSource } from '../services/ImageService';
 
 const StarRating = ({ rating }) => {
   const stars = [];
@@ -21,7 +22,7 @@ export default function ReviewCard({ review }) {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Image source={{ uri: review.book.image }} style={styles.bookImage} />
+        <Image source={getCoverSource(review.book)} style={styles.bookImage} />
         <View style={styles.headerText}>
           <Text style={styles.bookTitle}>{review.book.title}</Text>
           <Text style={styles.userName}>Avaliado por: {review.user.name}</Text>

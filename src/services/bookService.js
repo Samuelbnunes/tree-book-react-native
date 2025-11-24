@@ -27,26 +27,25 @@ export async function getGenres() {
  * @returns {Promise<Array>} Uma lista de livros.
  */
 export async function getBookList({ query = '', genreTag = '', targetCurrency = 'BRL' }) {
-  // Usa o endpoint GET /products/{targetCurrency} com o parâmetro de busca
   const response = await productServiceApi.get(`/products/${targetCurrency}`, {
     params: { search: query, genreTag: genreTag }
   });
   
-  // APIs Spring Boot com paginação geralmente retornam a lista dentro da propriedade "content"
   if (!response.data || !response.data.content || response.data.content.length === 0) {
     return [];
   }
 
-  // Mapeia a resposta da sua API para o formato que o app espera
   return response.data.content.map((book) => {
     return {
       id: book.id,
       title: book.title || 'Sem título',
+      synopsis: book.synopsis || 'Sem sinopse',
+      publisher: book.publisher || 'Sem editora',
+      imageUrl: book.imageUrl,
+      pageCount: book.pageCount || 0,
       author: book.author || 'Autor desconhecido',
-      image: book.coverUrl ? book.coverUrl.replace(/ /g, '%20') : `https://picsum.photos/seed/${book.id}/200/300`,
-      price: String(book.convertedPrice || book.price), // Prioriza o preço convertido
-      // A URL para buscar detalhes do livro, que será usada pela função getBookBy
       url: `/products/${book.id}/${targetCurrency}`,
+      convertedPrice: book.convertedPrice,
     };
   });
 }
@@ -59,10 +58,8 @@ export async function getBookList({ query = '', genreTag = '', targetCurrency = 
 export async function getBookBy(url) {
   const response = await productServiceApi.get(url);
   const bookData = response.data;
+  console.log(JSON.stringify(bookData, null, 2));
 
-  // Garante que o objeto retornado tenha a propriedade 'image' formatada corretamente.
-  return {
-    ...bookData,
-    image: bookData.coverUrl ? bookData.coverUrl.replace(/ /g, '%20') : `https://picsum.photos/seed/${bookData.id}/200/300`,
-  };
+  // Retorna os dados brutos, a formatação da imagem será feita pelo ImageService
+  return bookData;
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { getCoverSource } from '../services/ImageService';
 
 export default function CartItem({ item, isSelected, onSelect }) {
   return (
@@ -13,9 +14,7 @@ export default function CartItem({ item, isSelected, onSelect }) {
           style={styles.checkbox}
         />
         <Image
-          source={{ 
-            uri: item.imageUrl ? item.imageUrl.replace(/ /g, '%20') : `https://picsum.photos/seed/${item.productId}/200/300`
-          }} 
+          source={getCoverSource(item)} 
           style={styles.bookImage} />
         <View style={styles.infoContainer}>
           <Text style={styles.bookTitle} numberOfLines={2}>{item.title}</Text>
@@ -30,9 +29,9 @@ export default function CartItem({ item, isSelected, onSelect }) {
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1, // A largura da borda será controlada pelo estado de seleção
-    borderColor: 'transparent', // Torna a borda padrão invisível
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: 'transparent',
     borderRadius: 8,
     padding: 15,
     marginBottom: 15,
