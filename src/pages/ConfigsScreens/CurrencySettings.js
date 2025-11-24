@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import GradientBackground from '../components/GradientBackground';
+import GradientBackground from '../../components/GradientBackground';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 const currencies = [
   { code: 'BRL', name: 'Real Brasileiro', flag: '🇧🇷' },
@@ -22,13 +22,13 @@ const CurrencyItem = ({ currency, isSelected, onSelect }) => (
 );
 
 export default function CurrencySettings() {
-  const { user, updateUser } = useAuth();
+  const { user, updatePreferedCurrency } = useAuth();
 
   const handleCurrencySelect = async (currencyCode) => {
     if (user?.preferedCurrency === currencyCode) return;
 
     try {
-      await updateUser({ preferedCurrency: currencyCode });
+      await updatePreferedCurrency(currencyCode);
       Alert.alert("Sucesso", `Moeda alterada para ${currencyCode}.`);
     } catch (error) {
       Alert.alert("Erro", "Não foi possível alterar a moeda.");

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, Image } from 'react-native';
-import GradientBackground from '../components/GradientBackground';
+import GradientBackground from '../../components/GradientBackground';
 
 const teamMembers = [
   { role: 'Análista de Qualidade', name: 'Arthur Gilmar Colussi Biolchi', id: '1137267' },
@@ -18,7 +18,7 @@ export default function About() {
     <GradientBackground>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.container}>
-          <Image source={require('../../assets/logo.png')} style={styles.logo} />
+          <Image source={require('../../../assets/logo.png')} style={styles.logo} />
           <Text style={styles.appName}>TreE-Book</Text>
 
           <Text style={styles.sectionTitle}>Equipe</Text>

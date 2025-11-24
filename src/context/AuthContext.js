@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { signin as apiSignIn, signup as apiSignUp, updateUserProfile } from "../services/AuthService";
+import { signin as apiSignIn, signup as apiSignUp, updateUserProfile, updateUserCurrency } from "../services/AuthService";
 
 const AuthContext = createContext({});
 
@@ -65,24 +65,50 @@ export function AuthProvider({ children }) {
     setToken(null);
   }
 
-  async function updateUser(data) {
+  async function updateUser(data, visualOnly = false) {
     try {
-      // Chama o serviço para atualizar os dados no backend
-      const updatedUser = await updateUserProfile(data);
+      let userToUpdate;
+
+      if (visualOnly) {
+        // Se for apenas visual, usa os dados recebidos diretamente
+        userToUpdate = data;
+      } else {
+        // Caso contrário, chama o serviço para atualizar os dados no backend
+        userToUpdate = await updateUserProfile(data);
+      }
       
       // Atualiza o estado local e o AsyncStorage
-      setUser(updatedUser);
-      await AsyncStorage.setItem("@auth:user", JSON.stringify(updatedUser));
+      setUser(userToUpdate);
+      await AsyncStorage.setItem("@auth:user", JSON.stringify(userToUpdate));
 
-      return updatedUser;
+      return userToUpdate;
     } catch (error) {
       console.error("Falha ao atualizar usuário:", error);
       throw error;
     }
   }
 
+  async function updatePreferedCurrency(currency) {
+    if (!user) throw new Error("Usuário não autenticado.");
+
+    try {
+      // Chama o serviço para atualizar a moeda no backend
+      await updateUserCurrency(user.id, currency);
+
+      // Atualiza o estado local e o AsyncStorage
+      const updatedUser = { ...user, preferedCurrency: currency };
+      setUser(updatedUser);
+      await AsyncStorage.setItem("@auth:user", JSON.stringify(updatedUser));
+
+      return updatedUser;
+    } catch (error) {
+      console.error("Falha ao atualizar moeda:", error);
+      throw error;
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, signIn, signup, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, token, loading, signIn, signup, logout, updateUser, updatePreferedCurrency }}>
       {children}
     </AuthContext.Provider>
   );

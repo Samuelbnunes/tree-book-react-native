@@ -12,12 +12,13 @@ import CustomHeader from "../components/CustomHeader";
 import Cart from "../pages/Cart";
 import GradientBackground from "../components/GradientBackground";
 import Settings from "../pages/Settings";
-import About from './About';
+import About from './ConfigsScreens/About';
 import Genres from './Genres';
 import PurchaseSuccess from './AlertSreens/PurchaseSuccess';
-import Account from './Account';
-import CurrencySettings from './CurrencySettings';
-import Notifications from './Notifications';
+import ActionStatusScreen from './AlertSreens/ActionStatusScreen';
+import Account from './ConfigsScreens/Account';
+import CurrencySettings from './ConfigsScreens/CurrencySettings';
+import Notifications from './ConfigsScreens/Notifications';
 import GenersList from './GenersList';
 
 const Tab = createBottomTabNavigator();
@@ -123,6 +124,14 @@ function HomeStackNavigator() {
           title: "Detalhes do Livro",
           headerStyle: opts.headerStyle,
           headerTintColor: opts.headerTintColor,
+        }}
+      />
+      <HomeStack.Screen
+        name="ActionStatus"
+        component={ActionStatusScreen}
+        options={{
+          presentation: 'modal',
+          headerShown: false,
         }}
       />
     </HomeStack.Navigator>

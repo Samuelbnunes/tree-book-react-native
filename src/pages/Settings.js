@@ -5,9 +5,9 @@ import GradientBackground from '../components/GradientBackground';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAuth } from '../context/AuthContext';
 
-const ProfileCard = ({ user }) => (
+const ProfileCard = ({ user, navigation }) => (
   <View style={styles.profileCard}>
-    <TouchableOpacity style={styles.editButton} onPress={() => alert('Editar Perfil')}>
+    <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('Account')}>
       <MaterialIcons name="edit" size={24} color="white" />
     </TouchableOpacity>
     <MaterialIcons name="account-circle" size={80} color="white" />
@@ -29,21 +29,12 @@ export default function Settings({ navigation }) {
   const { user } = useAuth();
   const [isOptimizing, setIsOptimizing] = useState(false);
 
-  const handleExtremeMode = async () => {
-    await AsyncStorage.setItem('@settings:extremo', 'true');
-    Alert.alert("Modo Ativado", "O modo leitor noturno extremo foi ativado, mas você não verá nada diferente por enquanto.");
-  };
-
   const handleOptimization = () => {
     setIsOptimizing(true);
     setTimeout(() => {
       setIsOptimizing(false);
       Alert.alert("Otimização Concluída", "Velocidade de carregamento aumentada em 0.001%.");
     }, 2000);
-  };
-
-  const handleInvertColors = () => {
-    Alert.alert("Inverter Cores", "Para aplicar esta mudança, por favor, reinicie o aplicativo (mas não se preocupe, nada vai mudar de verdade).");
   };
 
   const settingsOptions = [
@@ -54,16 +45,14 @@ export default function Settings({ navigation }) {
   ];
 
   const uselessOptions = [
-    { id: 'u1', title: 'Modo Leitor Noturno', icon: 'bedtime', action: handleExtremeMode },
     { id: 'u2', title: 'Otimizar Velocidade', icon: 'speed', action: handleOptimization },
-    { id: 'u3', title: 'Inverter Cores Primárias', icon: 'invert-colors', action: handleInvertColors },
   ];
 
   return (
     <GradientBackground>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.container}>
-          <ProfileCard user={user} />
+        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 20 }}>
+          <ProfileCard user={user} navigation={navigation} />
           
           <Text style={styles.sectionTitle}>Configurações Gerais</Text>
           {settingsOptions.map(option => (
@@ -150,7 +139,7 @@ const styles = StyleSheet.create({
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(31, 31, 31, 0.8)',
+    backgroundColor: 'rgba(31, 31, 31, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,

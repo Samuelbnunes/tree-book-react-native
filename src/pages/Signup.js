@@ -11,7 +11,6 @@ export default function Signup({ navigation }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [currency, setCurrency] = useState("BRL"); // Estado para a moeda, com 'BRL' como padrão
-  const [userType, setUserType] = useState(1); // 1 para Leitor (padrão), 0 para Editor
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
 
@@ -33,7 +32,7 @@ export default function Signup({ navigation }) {
 
     setIsLoading(true);
     try {
-      await signup(name, email, password, currency, userType); // Passa a moeda e o tipo de usuário
+      await signup(name, email, password, currency, 1); // Passa o tipo de usuário como 1 (Leitor)
       Alert.alert("Sucesso", "Cadastro realizado com sucesso.", [
         { text: "OK", onPress: () => navigation.navigate("Login") },
       ]);
@@ -88,20 +87,6 @@ export default function Signup({ navigation }) {
                         <Text style={[styles.currencyButtonText, currency === c && styles.currencyButtonTextActive]}>{c}</Text>
                       </TouchableOpacity>
                     ))}
-                  </View>
-
-                  <Text style={[styles.text, { marginTop: 16 }]}>tipo de conta</Text>
-                  <View style={styles.currencySelector}>
-                    <TouchableOpacity
-                      style={[styles.currencyButton, userType === 1 && styles.currencyButtonActive]}
-                      onPress={() => setUserType(1)}>
-                      <Text style={[styles.currencyButtonText, userType === 1 && styles.currencyButtonTextActive]}>Leitor</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.currencyButton, userType === 0 && styles.currencyButtonActive]}
-                      onPress={() => setUserType(0)}>
-                      <Text style={[styles.currencyButtonText, userType === 0 && styles.currencyButtonTextActive]}>Editor</Text>
-                    </TouchableOpacity>
                   </View>
                 </View>
               </View>

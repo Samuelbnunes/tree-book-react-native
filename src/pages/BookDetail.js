@@ -31,7 +31,11 @@ export default function BookDetail({ route, navigation }) {
         }
       } catch (error) {
         console.error("Erro ao buscar detalhes do livro:", error);
-        Alert.alert("Erro", "Não foi possível carregar os detalhes do livro.");
+        navigation.navigate('ActionStatus', {
+          status: 'error',
+          title: 'Erro',
+          message: 'Não foi possível carregar os detalhes do livro.',
+        });
       } finally {
         setLoading(false);
       }
@@ -66,7 +70,11 @@ export default function BookDetail({ route, navigation }) {
       }));
     } catch (error) {
       console.error("Erro ao favoritar o livro:", error);
-      Alert.alert("Erro", "Não foi possível atualizar o status de favorito.");
+      navigation.navigate('ActionStatus', {
+        status: 'error',
+        title: 'Erro',
+        message: 'Não foi possível atualizar o status de favorito.',
+      });
     }
   };
 
@@ -158,14 +166,13 @@ function AddToCartButton({ book, navigation }) {
     return (
       <TouchableOpacity
         style={[styles.buttonBase, styles.purchasedButton]}
-        onPress={() => Alert.alert(
-          "Livro Adquirido",
-          "Você já possui este livro. Deseja ir para a sua biblioteca?",
-          [
-            { text: "Cancelar", style: "cancel" },
-            { text: "Ver Meus Livros", onPress: () => navigation.navigate('Meus Livros') }
-          ]
-        )}
+        onPress={() => navigation.navigate('ActionStatus', {
+          status: 'info',
+          title: 'Livro Adquirido',
+          message: 'Você já possui este livro. Deseja ir para a sua biblioteca?',
+          confirmButtonText: 'Ver Meus Livros',
+          onConfirm: () => navigation.navigate('Meus Livros'),
+        })}
       >
         <MaterialIcons name="check-circle" size={24} color="#1599E4" />
         <Text style={[styles.buttonText, styles.purchasedButtonText]}>Comprado</Text>

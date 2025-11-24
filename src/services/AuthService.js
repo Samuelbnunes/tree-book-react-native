@@ -65,6 +65,17 @@ export async function signin(email, password) {
  * @returns {Promise<any>} A resposta da API com o usuário atualizado.
  */
 export async function updateUserProfile(userData) {
-  const response = await authApiService.put("/auth/user", userData);
+  const response = await authApiService.put("/users", userData);
+  return response.data;
+}
+
+/**
+ * Atualiza a moeda preferida do usuário.
+ * @param {string} userId - O ID do usuário.
+ * @param {string} currency - A nova moeda (ex: 'BRL').
+ * @returns {Promise<any>} A resposta da API.
+ */
+export async function updateUserCurrency(userId, currency) {
+  const response = await authApiService.put(`/auth/prefered-currency/${userId}/${currency}`);
   return response.data;
 }
