@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
-import GradientBackground from '../components/GradientBackground';
+import GradientBackground from '../../components/GradientBackground';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import ButtonPrimary from '../components/ButtonPrimary';
-import { useCart } from '../context/CartContext';
+import ButtonPrimary from '../../components/ButtonPrimary';
+import { useCart } from '../../context/CartContext';
 
 export default function PurchaseSuccess({ navigation }) {
   return (

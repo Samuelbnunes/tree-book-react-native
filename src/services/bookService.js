@@ -44,7 +44,6 @@ export async function getBookList({ query = '', genreTag = '', targetCurrency = 
       imageUrl: book.imageUrl,
       pageCount: book.pageCount || 0,
       author: book.author || 'Autor desconhecido',
-      url: `/products/${book.id}/${targetCurrency}`,
       convertedPrice: book.convertedPrice,
     };
   });
@@ -52,14 +51,13 @@ export async function getBookList({ query = '', genreTag = '', targetCurrency = 
 
 /**
  * Busca os detalhes de um livro específico.
- * @param {string} url - A URL relativa para buscar o livro (ex: /products/123/BRL).
+ * @param {number} productId - O ID do produto a ser buscado.
+ * @param {string} targetCurrency - A moeda para conversão.
  * @returns {Promise<Object>} Os detalhes do livro.
  */
-export async function getBookBy(url) {
-  const response = await productServiceApi.get(url);
+export async function getBookDetails(productId, targetCurrency = 'BRL') {
+  const response = await productServiceApi.get(`/products/${productId}/${targetCurrency}`);
   const bookData = response.data;
-  console.log(JSON.stringify(bookData, null, 2));
 
-  // Retorna os dados brutos, a formatação da imagem será feita pelo ImageService
   return bookData;
 }

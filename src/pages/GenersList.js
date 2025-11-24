@@ -1,28 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, FlatList, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
 import GradientBackground from '../components/GradientBackground';
-import BookListItem from '../components/BookListItem'; // Importa o novo componente
 import { getBookList } from '../services/BookService';
 import { useAuth } from '../context/AuthContext';
+import BookListVertical from '../components/Book/BookListVertical';
 
-export default function AllBookList({ route, navigation }) {
-  // Recebe o ID da categoria pelos parâmetros da navegação
-  const { genreId } = route.params;
+export default function GenersList({ route, navigation }) {
+  const genreId = route.params?.genreId;
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
     async function fetchBooks() {
-      if (!genreId) return;
       setLoading(true);
       try {
+        let response;
         const userCurrency = user?.preferedCurrency || 'BRL';
-        // Busca os livros filtrando pela tag de gênero
-        const response = await getBookList({ genreTag: genreId, targetCurrency: userCurrency });
+
+        if (genreId) {
+          response = await getBookList({ genreTag: genreId, targetCurrency: userCurrency });
+        } else {
+          response = await getBookList();
+        }
         setBooks(response);
       } catch (error) {
-        console.error(`Erro ao buscar livros para o gênero ${genreId}:`, error);
+        console.error(`Erro ao buscar livros:`, error);
       } finally {
         setLoading(false);
       }
@@ -44,16 +47,9 @@ export default function AllBookList({ route, navigation }) {
     <GradientBackground>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
-          <FlatList
-            data={books}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <BookListItem
-                item={item}
-                onPress={() => navigation.navigate('BookDetail', { book: item })}
-              />
-            )}
-            contentContainerStyle={styles.listContent}
+          <BookListVertical
+            books={books}
+            onBookPress={(book) => navigation.navigate('BookDetail', { book })}
           />
         </View>
       </SafeAreaView>
@@ -68,9 +64,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
-  },
-  listContent: {
-    paddingHorizontal: 15,
-    paddingTop: 10,
   }
 });

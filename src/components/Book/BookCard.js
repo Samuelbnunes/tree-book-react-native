@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { getCoverSource } from "../services/ImageService";
+import { getCoverSource } from "../../services/ImageService";
 
 export default function BookCard({ book, onPress, onFavorite, isFavorite }) {
   return (

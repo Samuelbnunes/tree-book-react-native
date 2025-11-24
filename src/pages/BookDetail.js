@@ -3,64 +3,71 @@ import { View, Text, Image, StyleSheet, ActivityIndicator, Alert, ScrollView, To
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import GradientBackground from "../components/GradientBackground";
 import ButtonPrimary from "../components/ButtonPrimary";
+import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useInventory } from "../context/InventoryContext";
-import { useBookmark } from "../context/BookmarkContext";
-import { getBookBy, toggleFavorite } from "../services/BookService";
-import ManageBookmarksModal from "../components/ManageBookmarksModal";
+import { getBookDetails } from "../services/BookService";
+import { toggleFavoriteStatus } from "../services/InventoryService";
 import { getCoverSource } from "../services/ImageService";
 
 export default function BookDetail({ route, navigation }) {
-  const { assignBookmarksToBook } = useBookmark();
   const { inventory, isBookFavorited, toggleFavorite: toggleFavoriteInContext } = useInventory();
   const [book, setBook] = useState(route.params.book);
   const [loading, setLoading] = useState(false);
-  const [isAssignModalVisible, setIsAssignModalVisible] = useState(false);
-  const [editingBookmark, setEditingBookmark] = useState(null); // Para o modal de marcadores
+  const { user } = useAuth();
 
-  const isFavorite = isBookFavorited(book?.productId);
+  useEffect(() => {
+    const fetchBookDetails = async () => {
+      setLoading(true);
+      try {
+        const bookId = route.params?.book?.id;
+        if (bookId) {
+          const userCurrency = user?.preferedCurrency || 'BRL';
+          const updatedBook = await getBookDetails(bookId, userCurrency);
+          setBook(updatedBook);
+        } else {
+          console.warn("Navegação para BookDetail sem a URL do livro.");
+          return;
+        }
+      } catch (error) {
+        console.error("Erro ao buscar detalhes do livro:", error);
+        Alert.alert("Erro", "Não foi possível carregar os detalhes do livro.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Atualiza o cabeçalho com o botão de favoritar
+    fetchBookDetails();
+  }, [route.params.book, user]);
+
+  const isFavorite = isBookFavorited(book?.id);
+
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => {
-        const isPurchased = inventory.some(item => item.productId === book.productId || item.productId === book.id);
-        // Só mostra os botões se o livro estiver no inventário (comprado)
+        const isPurchased = inventory.some(item => item.productId === book.id);
         if (isPurchased) {
-          return (
-            <View style={{ flexDirection: 'row', gap: 15, marginRight: 15 }}>
-              <TouchableOpacity onPress={() => setIsAssignModalVisible(true)}>
-                <MaterialIcons name="bookmark-add" size={28} color="#fff" />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => toggleFavoriteInContext(book.productId || book.id)}>
-                <MaterialIcons name={isFavorite ? "favorite" : "favorite-border"} size={28} color={isFavorite ? "#E91E63" : "#fff"} />
-              </TouchableOpacity>
-            </View>
-          );
+          return null;
         }
         return null;
       },
     });
   }, [navigation, isFavorite, book]);
 
-  const handleSaveAssignedBookmarks = async (newBookmarkIds) => {
-    if (!book) return;
-
-    const initialBookmarkIds = new Set(book.bookmarksList?.map(b => b.id) || []);
-    const finalBookmarkIds = new Set(newBookmarkIds);
-
-    const idsToAdd = [...finalBookmarkIds].filter(id => !initialBookmarkIds.has(id));
-    const idsToRemove = [...initialBookmarkIds].filter(id => !finalBookmarkIds.has(id));
-
-    await assignBookmarksToBook(book.productId, idsToAdd, idsToRemove);
-
-    // Atualiza o estado local do livro para refletir as mudanças nos marcadores
-    const updatedBook = await getBookBy(book.productId || book.id);
-    setBook(prevBook => ({
-      ...prevBook,
-      ...updatedBook,
-      bookmarksList: updatedBook.bookmarksList || [],
-    }));
+  const handleToggleFavorite = async () => {
+    if (!book?.id) return;
+    try {
+      // Chama a função do contexto, que agora retorna o novo status de favorito da API.
+      const newFavoriteStatus = await toggleFavoriteInContext(book.id);
+      // Atualiza o estado local do livro com o valor retornado pela API.
+      setBook(prevBook => ({
+        ...prevBook,
+        isFavorite: newFavoriteStatus
+      }));
+    } catch (error) {
+      console.error("Erro ao favoritar o livro:", error);
+      Alert.alert("Erro", "Não foi possível atualizar o status de favorito.");
+    }
   };
 
   if (loading && !book) {
@@ -73,6 +80,8 @@ export default function BookDetail({ route, navigation }) {
     );
   } else if (book) {
 
+    const isPurchased = inventory.some(item => item.productId === book.id);
+
     return (
       <GradientBackground>
         <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -84,10 +93,21 @@ export default function BookDetail({ route, navigation }) {
             <Text style={styles.name}>{book?.title}</Text>
             <Text style={styles.author}>{book?.author || 'Autor Desconhecido'}</Text>
 
-            <Text style={styles.price}>
-              <Text style={styles.priceCurrency}>R$ </Text>
-              {parseFloat(book?.convertedPrice || book?.price || 0).toFixed(2)}
-            </Text>
+            {isPurchased && (
+              <View style={styles.actionsSection}>
+                <TouchableOpacity onPress={handleToggleFavorite} style={styles.actionButton} disabled={loading}>
+                  <MaterialIcons name={book.isFavorite ? "favorite" : "favorite-border"} size={28} color={book.isFavorite ? "#E91E63" : "#fff"} />
+                  <Text style={styles.actionText}>{book.isFavorite ? 'Favorito' : 'Favoritar'}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {!isPurchased && (
+              <Text style={styles.price}>
+                <Text style={styles.priceCurrency}>R$ </Text>
+                {parseFloat(book?.convertedPrice || book?.price || 0).toFixed(2)}
+              </Text>
+            )}
 
             <View style={styles.tagsContainer}>
               {book.genreTagsList?.map(tag => (
@@ -119,16 +139,6 @@ export default function BookDetail({ route, navigation }) {
             </View>
           </View>
         </ScrollView>
-        {/* Modal para gerenciar marcadores (criação/edição) */}
-        <ManageBookmarksModal
-          visible={isAssignModalVisible}
-          onClose={() => {
-            setIsAssignModalVisible(false);
-            setEditingBookmark(null); // Limpa o marcador em edição
-          }}
-          bookmarkToEdit={editingBookmark}
-          // onSave é tratado dentro do ManageBookmarksModal
-        />
       </GradientBackground>
     );
   }
@@ -141,12 +151,12 @@ function AddToCartButton({ book, navigation }) {
   const { cart, addToCart, removeSingleItem } = useCart();
 
   // A verificação de 'comprado' agora usa o array de objetos do inventário
-  const isPurchased = inventory.some(item => item.productId === book.productId || item.productId === book.id);
-  const isInCart = cart?.items?.some(item => item.productId === (book.productId || book.id));
+  const isPurchased = inventory.some(item => item.productId === book.id);
+  const isInCart = cart?.items?.some(item => item.productId === book.id);
 
   if (isPurchased) {
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[styles.buttonBase, styles.purchasedButton]}
         onPress={() => Alert.alert(
           "Livro Adquirido",
@@ -171,9 +181,9 @@ function AddToCartButton({ book, navigation }) {
 
   if (isInCart) {
     return (
-      <TouchableOpacity 
-        style={[styles.buttonBase, styles.removeButton]} 
-        onPress={() => removeSingleItem(book.productId || book.id)}
+      <TouchableOpacity
+        style={[styles.buttonBase, styles.removeButton]}
+        onPress={() => removeSingleItem(book.id)}
       >
         <MaterialIcons name="remove-shopping-cart" size={24} color="#fff" />
         <Text style={styles.buttonText}>Remover do Carrinho</Text>
@@ -282,7 +292,26 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     fontWeight: '600',
   },
-  // Estilos para os botões de ação
+  actionsSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 10,
+    padding: 15,
+    marginVertical: 20,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionText: {
+    color: '#ccc',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   buttonBase: {
     height: 54,
     borderRadius: 32,

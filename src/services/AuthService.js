@@ -1,4 +1,5 @@
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const authApiService = axios.create({
   // Para o Emulador Android, use 10.0.2.2 para se conectar ao localhost do seu computador.
@@ -9,6 +10,20 @@ const authApiService = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// Interceptador para adicionar o token JWT em todas as requisições
+authApiService.interceptors.request.use(
+  async (config) => {
+    const token = await AsyncStorage.getItem("@auth:token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 /**
  * Realiza o cadastro de um novo usuário.
@@ -41,5 +56,15 @@ export async function signin(email, password) {
     email: email.toLowerCase(),
     password,
   });
+  return response.data;
+}
+
+/**
+ * Atualiza os dados do perfil do usuário.
+ * @param {object} userData - Os dados a serem atualizados.
+ * @returns {Promise<any>} A resposta da API com o usuário atualizado.
+ */
+export async function updateUserProfile(userData) {
+  const response = await authApiService.put("/auth/user", userData);
   return response.data;
 }

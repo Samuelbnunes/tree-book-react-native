@@ -16,18 +16,18 @@ import { useAuth } from '../context/AuthContext';
 import { useInventory } from '../context/InventoryContext';
 import { useImage } from '../context/ImageContext'; // Importa o hook do novo contexto
 import GradientBackground from '../components/GradientBackground';
-import BookCarousel from '../components/BookCarousel';
+import BookCarousel from '../components/Book/BookCarousel';
 
 export default function BookList({ navigation }) {
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [genres, setGenres] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const { user, loading: authLoading } = useAuth(); // Pega o usuário e o status de loading do contexto
   const { enrichBooksWithInventoryData } = useInventory();
   const { preloadImages } = useImage(); // Pega a função de pré-carregamento
 
   useEffect(() => {
-    // Só busca as seções se o contexto de autenticação não estiver carregando e tivermos um usuário.
     if (!authLoading) {
       fetchSections();
     }
@@ -38,25 +38,25 @@ export default function BookList({ navigation }) {
     try {
       const userCurrency = user?.preferedCurrency || 'BRL'; // Usa a moeda do usuário ou 'BRL'
 
-      // 1. Busca a lista de todas as categorias (gêneros)
-      const genres = await getGenres();
+      const genresData = await getGenres();
+      setGenres(genresData);
 
-      // 2. Para cada categoria, busca os livros correspondentes
-      const promises = genres.map(genre =>
+      if (!genresData || genresData.length === 0) {
+        setSections([]); // Define as seções como vazias
+        return; // Interrompe a execução se não houver gêneros
+      }
+
+      const promises = genresData.map(genre =>
         getBookList({ genreTag: genre.id, targetCurrency: userCurrency })
           .then(books => {
-            // Enriquece os livros com dados do inventário (favoritos, marcadores)
             const enrichedBooks = enrichBooksWithInventoryData(books);
             return { title: genre.description, data: enrichedBooks, genreId: genre.id };
           })
       );
 
-      // 3. Espera todas as buscas terminarem
       const results = await Promise.all(promises);
-      // Filtra seções que não retornaram livros
       setSections(results.filter(section => section.data.length > 0));
 
-      // Inicia o pré-carregamento das imagens em segundo plano
       const allBooks = results.flatMap(section => section.data);
       preloadImages(allBooks);
     } catch (e) {
@@ -93,14 +93,19 @@ export default function BookList({ navigation }) {
             </View>
           </View>
 
-          <ScrollView horizontal style={styles.tabsContainer} showsHorizontalScrollIndicator={false}>
-            {['E-books', 'Gêneros'].map((tab) => (
+          <ScrollView contentContainerStyle={styles.tabsContentContainer} horizontal style={styles.tabsContainer} showsHorizontalScrollIndicator={false}>
+            {['E-books', 'Gêneros', 'Lançamentos', 'Promoções'].map((tab) => (
               <TouchableOpacity
                 key={tab}
                 style={[styles.tab, tab === 'E-books' && styles.activeTab]}
                 onPress={() => {
                   if (tab === 'Gêneros') {
                     navigation.navigate('Genres');
+                  } else if (tab === 'Lançamentos' || tab === 'Promoções') {
+                    if (genres.length > 0) {
+                      const randomGenre = genres[Math.floor(Math.random() * genres.length)];
+                      navigation.navigate('AllBookList', { genreId: randomGenre.id, title: randomGenre.description });
+                    }
                   } else {
                     console.log(`Clicou em ${tab}`);
                   }
@@ -111,7 +116,6 @@ export default function BookList({ navigation }) {
             ))}
           </ScrollView>
           <ScrollView>
-            {/* Renderiza uma lista vertical de carrosséis, um para cada seção */}
             {sections.map(section => (
               <BookCarousel
                 key={section.title}
@@ -145,7 +149,11 @@ const styles = StyleSheet.create({
   },
   searchIcon: { marginRight: 10, color: '#fff' },
   searchInput: { flex: 1, height: '100%', color: '#fff', fontSize: 16 },
-  tabsContainer: { flexGrow: 0, height: 48, marginBottom: 15, paddingLeft: 15 },
+  tabsContainer: { flexGrow: 0, height: 48, marginBottom: 15 },
+  tabsContentContainer: {
+    paddingHorizontal: 15,
+    alignItems: 'center',
+  },
   tab: {
     paddingHorizontal: 16,
     paddingVertical: 6,

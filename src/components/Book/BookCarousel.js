@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { getCoverSource } from "../services/ImageService";
+import { getCoverSource } from "../../services/ImageService";
 
 function CarouselBookCard({ item, onPress }) {
   return (
@@ -52,6 +52,9 @@ export default function BookCarousel({ navigation, title, books, genreId }) {
   );
 }
 
+const itemWidth = 115;
+const itemHeight = itemWidth * 1.5; // Proporção 2:3 para a capa
+
 const carouselStyles = StyleSheet.create({
   listContainer: {
     flex: 1,
@@ -73,7 +76,7 @@ const carouselStyles = StyleSheet.create({
     color: '#fff',
   },
   itemContainer: {
-    width: 120,
+    width: itemWidth,
     marginRight: 15,
   },
   bookContainer: {
@@ -81,7 +84,7 @@ const carouselStyles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 150,
+    height: itemHeight,
     borderRadius: 6,
   },
   textContainerBelow: {

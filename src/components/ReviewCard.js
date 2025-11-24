@@ -1,79 +1,95 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { getCoverSource } from '../services/ImageService';
-
-const StarRating = ({ rating }) => {
-  const stars = [];
-  for (let i = 1; i <= 5; i++) {
-    stars.push(
-      <MaterialIcons
-        key={i}
-        name={i <= rating ? 'star' : 'star-border'}
-        size={20}
-        color="#FFD700"
-      />
-    );
-  }
-  return <View style={styles.starContainer}>{stars}</View>;
-};
 
 export default function ReviewCard({ review }) {
+  // Adiciona uma verificação para garantir que o review e seus dados aninhados existam
+  if (!review || !review.username || !review.book) {
+    return null; // Não renderiza o card se os dados estiverem incompletos
+  }
+
   return (
-    <View style={styles.card}>
-      <View style={styles.header}>
-        <Image source={getCoverSource(review.book)} style={styles.bookImage} />
-        <View style={styles.headerText}>
-          <Text style={styles.bookTitle}>{review.book.title}</Text>
-          <Text style={styles.userName}>Avaliado por: {review.user.name}</Text>
-          <StarRating rating={review.rating} />
-        </View>
+    <View style={styles.reviewCard}>
+      <View style={styles.avatarContainer}>
+        {review.userImage ? (
+          <Image source={{ uri: review.userImage }} style={styles.avatarImage} />
+        ) : (
+          <MaterialIcons name="account-circle" size={48} color="rgba(255, 255, 255, 0.5)" />
+        )}
       </View>
-      <Text style={styles.reviewText}>{review.text}</Text>
+      <View style={styles.reviewContent}>
+        <View style={styles.reviewHeader}>
+          <Text style={styles.reviewUser}>{review.username}</Text>
+          <Text style={styles.reviewDate}>{new Date(review.postDate).toLocaleDateString()}</Text>
+        </View>
+        <Text style={styles.reviewTitle} numberOfLines={1}>{review.title}</Text>
+        <Text style={styles.reviewBookTitle} numberOfLines={1}>{review.book.title}</Text>
+        <View style={styles.ratingContainer}>
+          {[...Array(5)].map((_, i) => (
+            <MaterialIcons key={i} name="star" size={16} color={i < review.grade ? '#FFD700' : '#555'} />
+          ))}
+        </View>
+        <Text style={styles.reviewText}>{review.comment}</Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+  reviewCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 8,
     padding: 15,
     marginBottom: 15,
-  },
-  header: {
     flexDirection: 'row',
-    marginBottom: 10,
   },
-  bookImage: {
-    width: 60,
-    height: 90,
-    resizeMode: 'contain',
-    borderRadius: 4,
-  },
-  headerText: {
-    flex: 1,
-    marginLeft: 15,
+  avatarContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24, // Metade da largura/altura para fazer um círculo
     justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Cor de fundo para o placeholder
   },
-  bookTitle: {
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
+  },
+  reviewContent: {
+    flex: 1,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  reviewUser: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  reviewDate: {
+    color: '#999',
+    fontSize: 12,
+  },
+  reviewTitle: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+    marginVertical: 2,
   },
-  userName: {
+  reviewBookTitle: {
     color: '#ccc',
-    fontSize: 12,
-    marginTop: 4,
+    marginVertical: 4,
   },
-  starContainer: {
+  ratingContainer: {
     flexDirection: 'row',
-    marginTop: 8,
+    marginBottom: 8,
   },
   reviewText: {
-    color: '#fff',
+    color: '#ddd',
     fontSize: 14,
     lineHeight: 20,
   },

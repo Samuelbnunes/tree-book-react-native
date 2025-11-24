@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 30,
-    gap: 300,
+    justifyContent: 'space-between',
   },
   logo: {
     width: 32,

@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAuth } from "../context/AuthContext";
-import BookList from "../data/BookList";
+import BookList from "../pages/HomeBookList";
 import BookDetail from "../pages/BookDetail";
 import Community from "../pages/Community";
 import MyBooks from "../pages/MyBooks";
@@ -14,9 +14,11 @@ import GradientBackground from "../components/GradientBackground";
 import Settings from "../pages/Settings";
 import About from './About';
 import Genres from './Genres';
-import BookmarkList from './BookmarkList';
-import PurchaseSuccess from './PurchaseSuccess';
-import AllBookList from './AllBookList';
+import PurchaseSuccess from './AlertSreens/PurchaseSuccess';
+import Account from './Account';
+import CurrencySettings from './CurrencySettings';
+import Notifications from './Notifications';
+import GenersList from './GenersList';
 
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
@@ -53,6 +55,9 @@ function SettingsStackNavigator() {
     <SettingsStack.Navigator screenOptions={{ contentStyle: { backgroundColor: 'transparent' } }}>
       <SettingsStack.Screen name="SettingsList" component={Settings} options={{ ...opts, headerTitle: () => <CustomHeader title="Configurações" /> }} />
       <SettingsStack.Screen name="About" component={About} options={{ ...opts, headerTitle: () => <CustomHeader title="Sobre o App" /> }} />
+      <SettingsStack.Screen name="Notifications" component={Notifications} options={{ ...opts, headerTitle: () => <CustomHeader title="Notificações" /> }} />
+      <SettingsStack.Screen name="CurrencySettings" component={CurrencySettings} options={{ ...opts, headerTitle: () => <CustomHeader title="Moeda" /> }} />
+      <SettingsStack.Screen name="Account" component={Account} options={{ ...opts, headerTitle: () => <CustomHeader title="Conta" /> }} />
     </SettingsStack.Navigator>
   );
 }
@@ -71,7 +76,6 @@ function MyBooksStackNavigator() {
   return (
     <MyBooksStack.Navigator screenOptions={{ contentStyle: { backgroundColor: 'transparent' } }}>
       <MyBooksStack.Screen name="MyBooksList" component={MyBooks} options={{ ...opts, headerTitle: () => <CustomHeader title="Meus Livros" /> }} />
-      <MyBooksStack.Screen name="BookmarkList" component={BookmarkList} options={{ ...opts, headerTitle: () => <CustomHeader title="Marcadores" /> }} />
       <MyBooksStack.Screen
         name="BookDetail"
         component={BookDetail}
@@ -84,7 +88,8 @@ function MyBooksStackNavigator() {
   );
 }
 
-function HomeStackNavigator({ onLogout }) {
+function HomeStackNavigator() {
+  const { logout } = useAuth();
   const opts = commonHeaderOptions();
   return (
     <HomeStack.Navigator>
@@ -95,7 +100,7 @@ function HomeStackNavigator({ onLogout }) {
           ...opts,
           headerTitle: () => <CustomHeader title="Home" />,
           headerRight: () => (
-            <TouchableOpacity onPress={onLogout} style={{ marginRight: 15 }}>
+            <TouchableOpacity onPress={logout} style={{ marginRight: 15 }}>
               <MaterialIcons name="logout" size={24} color="white" />
             </TouchableOpacity>
           ),
@@ -108,7 +113,7 @@ function HomeStackNavigator({ onLogout }) {
       />
       <HomeStack.Screen
         name="AllBookList"
-        component={AllBookList}
+        component={GenersList}
         options={({ route }) => ({ ...opts, headerTitle: () => <CustomHeader title={route.params.title} /> })}
       />
       <HomeStack.Screen
@@ -124,8 +129,7 @@ function HomeStackNavigator({ onLogout }) {
   );
 }
 
-export default function Home({ onLogout }) {
-  const { logout } = useAuth();
+export default function Home() {
   return (
     <GradientBackground>
       <Tab.Navigator
@@ -149,7 +153,7 @@ export default function Home({ onLogout }) {
           },
         })}
       >
-        <Tab.Screen name="Home" children={() => <HomeStackNavigator onLogout={logout} />} />
+        <Tab.Screen name="Home" component={HomeStackNavigator} />
         <Tab.Screen name="Comunidade" component={CommunityStackNavigator} />
         <Tab.Screen name="Meus Livros" component={MyBooksStackNavigator} />
         <Tab.Screen name="Carrinho" component={CartStackNavigator} />
@@ -157,8 +161,4 @@ export default function Home({ onLogout }) {
       </Tab.Navigator>
     </GradientBackground>
   );
-}
-
-function HomeWithLogout({ onLogout }) {
-  return <HomeStackNavigator onLogout={onLogout} />;
 }

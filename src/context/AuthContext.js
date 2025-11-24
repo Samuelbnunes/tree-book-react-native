@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { signin as apiSignIn, signup as apiSignUp } from "../services/AuthService";
+import { signin as apiSignIn, signup as apiSignUp, updateUserProfile } from "../services/AuthService";
 
 const AuthContext = createContext({});
 
@@ -50,19 +50,9 @@ export function AuthProvider({ children }) {
   async function signup(name, email, password, currency, userType) {
     try {
       // Chama a função de cadastro do AuthService
-      const response = await apiSignUp(name, email, password, currency, userType);
-      // Supondo que a resposta contém { user, accessToken }
-      const { user: newUser, accessToken } = response;
-
-      if (newUser && accessToken) {
-        await AsyncStorage.setItem("@auth:user", JSON.stringify(newUser));
-        await AsyncStorage.setItem("@auth:token", accessToken);
-        setUser(newUser);
-        setToken(accessToken);
-      } else {
-        // Se não houver login automático, apenas confirme o sucesso.
-        console.log("Cadastro realizado com sucesso.", response);
-      }
+      await apiSignUp(name, email, password, currency, userType);
+      // Após o cadastro bem-sucedido, faz o login automaticamente
+      await signIn(email, password);
     } catch (error) {
       console.error("Falha no cadastro:", error);
       throw error;
@@ -70,19 +60,29 @@ export function AuthProvider({ children }) {
   }
 
   async function logout() {
+    await AsyncStorage.clear();
+    setUser(null);
+    setToken(null);
+  }
+
+  async function updateUser(data) {
     try {
-      await AsyncStorage.removeItem("@auth:user");
-      await AsyncStorage.removeItem("@auth:token");
+      // Chama o serviço para atualizar os dados no backend
+      const updatedUser = await updateUserProfile(data);
+      
+      // Atualiza o estado local e o AsyncStorage
+      setUser(updatedUser);
+      await AsyncStorage.setItem("@auth:user", JSON.stringify(updatedUser));
+
+      return updatedUser;
     } catch (error) {
-      console.warn("Failed to clear auth storage", error);
-    } finally {
-      setUser(null);
-      setToken(null);
+      console.error("Falha ao atualizar usuário:", error);
+      throw error;
     }
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, signIn, signup, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, signIn, signup, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

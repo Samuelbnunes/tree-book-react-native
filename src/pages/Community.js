@@ -1,79 +1,103 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TextInput, ScrollView, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TextInput, ScrollView, Image, ActivityIndicator } from 'react-native';
 import GradientBackground from '../components/GradientBackground';
+import ReviewCard from '../components/ReviewCard';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { getCoverSource } from '../services/ImageService';
+import { getAllReviews } from '../services/ReviewService';
 
 export default function Community() {
   const [comment, setComment] = useState('');
+  const [reviews, setReviews] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Dados de exemplo para as avaliações
-  const reviews = [
-    {
-      id: '1',
-      user: { name: 'Ana' },
-      book: { title: 'React Native in Action', imageUrl: 'https://picsum.photos/seed/101/200/300' },
-      rating: 5,
-      text: 'Este livro é incrível! Me ajudou a entender conceitos complexos de forma muito clara. Recomendo a todos que estão começando.',
-    },
-    {
-      id: '2',
-      user: { name: 'Bruno' },
-      book: { title: 'JavaScript: The Good Parts', imageUrl: 'https://picsum.photos/seed/102/200/300' },
-      rating: 4,
-      text: 'Um clássico indispensável. Embora um pouco antigo, os fundamentos que ele ensina são atemporais e essenciais.',
-    },
-    {
-      id: '3',
-      user: { name: 'Carla' },
-      book: { title: 'Clean Code', imageUrl: 'https://picsum.photos/seed/103/200/300' },
-      rating: 5,
-      text: 'Mudou a forma como eu escrevo código. Leitura obrigatória para qualquer desenvolvedor que se preze. Simplesmente fantástico!',
-    },
+  // Lista de títulos de livros mocados para aleatorização
+  const mockedBookTitles = [
+    "O Guia do Mochileiro das Galáxias",
+    "A Arte da Guerra",
+    "1984",
+    "O Senhor dos Anéis",
+    "Fahrenheit 451",
+    "Duna",
   ];
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        const reviewsData = await getAllReviews();
 
-  // Componente para renderizar cada avaliação
-  const ReviewCard = ({ review }) => (
-    <View style={styles.reviewCard}>
-      <Image source={getCoverSource(review.book)} style={styles.reviewBookImage} />
-      <View style={styles.reviewContent}>
-        <Text style={styles.reviewUser}>{review.user.name} avaliou:</Text>
-        <Text style={styles.reviewBookTitle}>{review.book.title}</Text>
-        <View style={styles.ratingContainer}>
-          {[...Array(5)].map((_, i) => (
-            <MaterialIcons key={i} name="star" size={16} color={i < review.rating ? '#FFD700' : '#555'} />
-          ))}
-        </View>
-        <Text style={styles.reviewText}>{review.text}</Text>
-      </View>
-    </View>
-  );
+        if (reviewsData.length > 0) {
+          // Busca fotos de usuários aleatórios, uma para cada avaliação
+          const userImagesResponse = await fetch(`https://randomuser.me/api/?results=${reviewsData.length}`);
+          const userImagesData = await userImagesResponse.json();
+
+          // Combina os dados, atribuindo um livro aleatório e uma imagem de usuário a cada avaliação
+          const reviewsWithDetails = reviewsData.map((review, index) => ({
+            ...review,
+            userImage: userImagesData.results[index]?.picture?.large,
+            // Atribui um livro aleatório da lista mocada
+            book: { title: mockedBookTitles[Math.floor(Math.random() * mockedBookTitles.length)] },
+          }));
+          setReviews(reviewsWithDetails);
+        } else {
+          setReviews([]);
+        }
+
+      } catch (err) {
+        setError("Não foi possível carregar as avaliações.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  // Filtra as avaliações com base na query de busca
+  const filteredReviews = reviews.filter(review => {
+    const query = searchQuery.toLowerCase();
+    return (
+      review.username.toLowerCase().includes(query) ||
+      review.title.toLowerCase().includes(query) ||
+      review.comment.toLowerCase().includes(query)
+    );
+  });
 
   return (
     <GradientBackground>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
-          <View style={styles.commentContainer}>
-            <MaterialIcons name="chat-bubble-outline" size={24} color="white" style={styles.commentIcon} />
+          <View style={styles.searchContainer}>
+            <MaterialIcons name="search" size={24} color="white" style={styles.searchIcon} />
             <TextInput
-              style={styles.commentInput}
-              placeholder="Adicionar um comentário..."
-              placeholderTextColor="#ccc"
-              value={comment}
-              onChangeText={setComment}
+              style={styles.searchInput}
+              placeholder="Pesquisar em avaliações..."
+              placeholderTextColor="rgba(255, 255, 255, 0.5)"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="search"
             />
           </View>
 
-          <ScrollView>
-            {reviews.map(review => (
-              <ReviewCard key={review.id} review={review} />
-            ))}
-          </ScrollView>
+          {loading ? (
+            <ActivityIndicator size="large" color="#1599E4" style={{ marginTop: 50 }} />
+          ) : error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : (
+            <ScrollView>
+              {filteredReviews.length > 0
+                ? filteredReviews.map((review, index) => <ReviewCard key={`${review.postDate}-${review.username}-${index}`} review={review} />)
+                : (
+                  <Text style={styles.emptyText}>Nenhuma avaliação na comunidade ainda.</Text>
+                )}
+            </ScrollView>
+          )}
         </View>
       </SafeAreaView>
     </GradientBackground>
   );
-}
+};
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -83,7 +107,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
   },
-  commentContainer: {
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     height: 54,
@@ -94,48 +118,25 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.1)",
     marginBottom: 20,
   },
-  commentIcon: {
+  searchIcon: {
     marginRight: 10,
   },
-  commentInput: {
+  searchInput: {
     flex: 1,
     height: '100%',
     color: "#fff",
     fontSize: 16,
   },
-  reviewCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 15,
-    flexDirection: 'row',
-  },
-  reviewBookImage: {
-    width: 60,
-    height: 90,
-    borderRadius: 4,
-    marginRight: 15,
-  },
-  reviewContent: {
-    flex: 1,
-  },
-  reviewUser: {
-    color: '#ccc',
-    fontSize: 14,
-  },
-  reviewBookTitle: {
-    color: '#fff',
+  errorText: {
+    color: '#ff6b6b',
+    textAlign: 'center',
+    marginTop: 50,
     fontSize: 16,
-    fontWeight: 'bold',
-    marginVertical: 4,
   },
-  ratingContainer: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  reviewText: {
-    color: '#ddd',
-    fontSize: 14,
-    lineHeight: 20,
+  emptyText: {
+    color: '#ccc',
+    textAlign: 'center',
+    marginTop: 50,
+    fontSize: 16,
   },
 });
