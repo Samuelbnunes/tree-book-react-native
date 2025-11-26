@@ -61,9 +61,7 @@ export default function BookDetail({ route, navigation }) {
   const handleToggleFavorite = async () => {
     if (!book?.id) return;
     try {
-      // Chama a função do contexto, que agora retorna o novo status de favorito da API.
       const newFavoriteStatus = await toggleFavoriteInContext(book.id);
-      // Atualiza o estado local do livro com o valor retornado pela API.
       setBook(prevBook => ({
         ...prevBook,
         isFavorite: newFavoriteStatus
@@ -158,7 +156,6 @@ function AddToCartButton({ book, navigation }) {
   const { inventory } = useInventory();
   const { cart, addToCart, removeSingleItem } = useCart();
 
-  // A verificação de 'comprado' agora usa o array de objetos do inventário
   const isPurchased = inventory.some(item => item.productId === book.id);
   const isInCart = cart?.items?.some(item => item.productId === book.id);
 

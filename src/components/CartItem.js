@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardSelected: {
-    borderColor: '#1599E4', // Borda azul para item selecionado
+    borderColor: '#1599E4',
   },
   checkbox: {
     marginRight: 15,

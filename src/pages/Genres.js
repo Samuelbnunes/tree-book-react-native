@@ -22,8 +22,7 @@ export default function Genres({ navigation }) {
     fetchGenres();
   }, []);
 
-  function handleSelect(genre) { // genre is an object like { id, description }
-    // Navega para a tela AllBookList, passando o ID e o título do gênero
+  function handleSelect(genre) {
     navigation.navigate('AllBookList', { genreId: genre.id, title: genre.description });
   }
 

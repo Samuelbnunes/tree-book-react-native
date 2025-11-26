@@ -53,7 +53,7 @@ export default function BookCarousel({ navigation, title, books, genreId }) {
 }
 
 const itemWidth = 115;
-const itemHeight = itemWidth * 1.5; // Proporção 2:3 para a capa
+const itemHeight = itemWidth * 1.5;
 
 const carouselStyles = StyleSheet.create({
   listContainer: {
@@ -108,7 +108,7 @@ const carouselStyles = StyleSheet.create({
   price: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#ccc', // Adaptado para Dark Mode
+    color: '#ccc',
     marginTop: 4,
   },
   card: {

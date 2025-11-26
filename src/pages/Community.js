@@ -11,8 +11,6 @@ export default function Community() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Lista de títulos de livros mocados para aleatorização
   const mockedBookTitles = [
     "O Guia do Mochileiro das Galáxias",
     "A Arte da Guerra",
@@ -28,15 +26,11 @@ export default function Community() {
         const reviewsData = await getAllReviews();
 
         if (reviewsData.length > 0) {
-          // Busca fotos de usuários aleatórios, uma para cada avaliação
           const userImagesResponse = await fetch(`https://randomuser.me/api/?results=${reviewsData.length}`);
           const userImagesData = await userImagesResponse.json();
-
-          // Combina os dados, atribuindo um livro aleatório e uma imagem de usuário a cada avaliação
           const reviewsWithDetails = reviewsData.map((review, index) => ({
             ...review,
             userImage: userImagesData.results[index]?.picture?.large,
-            // Atribui um livro aleatório da lista mocada
             book: { title: mockedBookTitles[Math.floor(Math.random() * mockedBookTitles.length)] },
           }));
           setReviews(reviewsWithDetails);
@@ -54,7 +48,6 @@ export default function Community() {
     fetchData();
   }, []);
 
-  // Filtra as avaliações com base na query de busca
   const filteredReviews = reviews.filter(review => {
     const query = searchQuery.toLowerCase();
     return (

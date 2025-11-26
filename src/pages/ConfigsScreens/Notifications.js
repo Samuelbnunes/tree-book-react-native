@@ -4,7 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import GradientBackground from '../../components/GradientBackground';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
-// Componente reutilizável para cada item de configuração
 const NotificationSettingItem = ({ title, description, icon, value, onValueChange }) => (
   <View style={styles.itemContainer}>
     <MaterialIcons name={icon} size={28} color="white" style={styles.icon} />
@@ -32,7 +31,6 @@ export default function Notifications() {
   });
   const [loading, setLoading] = useState(true);
 
-  // Carrega as configurações salvas ao iniciar a tela
   useEffect(() => {
     async function loadSettings() {
       try {
@@ -49,7 +47,6 @@ export default function Notifications() {
     loadSettings();
   }, []);
 
-  // Salva as configurações sempre que elas mudam
   const handleValueChange = async (key, value) => {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);

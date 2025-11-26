@@ -2,7 +2,10 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const inventoryServiceApi = axios.create({
-  baseURL: "http://192.168.100.134:8765",
+  // Para o Emulador Android, use 10.0.2.2 para se conectar ao localhost do seu computador.
+  // Se estiver usando um celular físico, substitua '10.0.2.2' pelo IP da sua máquina na rede.
+  // Ex: baseURL: "http://192.168.1.10:8900"
+  baseURL: "http://localHost:8765",
   headers: {
     "Content-Type": "application/json",
   },
@@ -33,7 +36,7 @@ export const getInventory = async (params = {}) => {
 
 /**
  * Adiciona um ou mais livros ao inventário do usuário.
- * @param {Array<number>} productIds - Lista de IDs dos produtos a serem adicionados.
+ * @param {Array<number>} productIds - Lista de IDs dos produtos.
  * @returns {Promise<Object>}
  */
 export const addBooksToInventory = async (productIds) => {

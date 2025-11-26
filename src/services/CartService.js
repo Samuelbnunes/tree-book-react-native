@@ -1,15 +1,16 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Instância do Axios para o serviço de carrinho, apontando para o Gateway
 const cartServiceApi = axios.create({
-  baseURL: "http://192.168.100.134:8765", // Apontando para o API Gateway
+  // Para o Emulador Android, use 10.0.2.2 para se conectar ao localhost do seu computador.
+  // Se estiver usando um celular físico, substitua '10.0.2.2' pelo IP da sua máquina na rede.
+  // Ex: baseURL: "http://192.168.1.10:8900"
+  baseURL: "http://localHost:8765",
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Interceptador para adicionar o token JWT em todas as requisições
 cartServiceApi.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem("@auth:token");
@@ -59,7 +60,6 @@ export const toggleItemSelection = async (productId, currency = 'BRL') => {
 
 /**
  * Remove os itens selecionados do carrinho.
- * A API trata isso como uma "compra", excluindo os itens selecionados.
  * @returns {Promise<Array>} A lista de itens removidos.
  */
 export const removeSelectedItems = async () => {
@@ -69,7 +69,6 @@ export const removeSelectedItems = async () => {
 
 /**
  * Remove os itens selecionados do carrinho.
- * A API trata isso como uma "compra", excluindo os itens selecionados.
  * @returns {Promise<Array>} A lista de itens removidos.
  */
 export const removeSingleItem = async () => {
@@ -78,17 +77,9 @@ export const removeSingleItem = async () => {
 };
 /**
  * Finaliza a compra dos itens selecionados no carrinho.
- * A API excluirá os itens selecionados do carrinho.
  * @returns {Promise<Array>} A lista de itens comprados.
  */
 export const checkout = async () => {
   const response = await cartServiceApi.delete('/ws/cart');
   return response.data;
 };
-
-/**
- * Limpa todos os itens do carrinho (simulado).
- * A API não fornece um endpoint para isso, então vamos simular
- * finalizando a compra de todos os itens se eles estiverem selecionados.
- * Esta função pode precisar de ajuste se a lógica de negócio for diferente.
- */

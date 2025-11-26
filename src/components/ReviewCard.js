@@ -3,9 +3,8 @@ import { View, Text, StyleSheet, Image } from 'react-native';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 export default function ReviewCard({ review }) {
-  // Adiciona uma verificação para garantir que o review e seus dados aninhados existam
   if (!review || !review.username || !review.book) {
-    return null; // Não renderiza o card se os dados estiverem incompletos
+    return null;
   }
 
   return (
@@ -46,11 +45,11 @@ const styles = StyleSheet.create({
   avatarContainer: {
     width: 48,
     height: 48,
-    borderRadius: 24, // Metade da largura/altura para fazer um círculo
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Cor de fundo para o placeholder
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   avatarImage: {
     width: '100%',

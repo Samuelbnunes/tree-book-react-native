@@ -29,14 +29,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "O aplicativo precisa de acesso às suas fotos para que você possa selecionar uma imagem de perfil."
-        }
-      ]
-    ],
+
     "extra": {
       "eas": {
         "projectId": "e72457bf-2976-4c8b-a2c6-d66ed12d724b"

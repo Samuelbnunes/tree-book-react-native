@@ -27,9 +27,7 @@ export function AuthProvider({ children }) {
 
   async function signIn(email, password) {
     try {
-      // Chama a função de login do AuthService
       const response = await apiSignIn(email, password);
-      // A API retorna um objeto com as propriedades { user, token }
       const { user: loggedUser, token: accessToken } = response;
 
       if (loggedUser && accessToken) {
@@ -42,16 +40,13 @@ export function AuthProvider({ children }) {
       }
     } catch (error) {
       console.error("Falha no login:", error);
-      // Re-lança o erro para que a tela possa tratá-lo (ex: mostrar um alerta)
       throw error;
     }
   }
 
   async function signup(name, email, password, currency, userType) {
     try {
-      // Chama a função de cadastro do AuthService
       await apiSignUp(name, email, password, currency, userType);
-      // Após o cadastro bem-sucedido, faz o login automaticamente
       await signIn(email, password);
     } catch (error) {
       console.error("Falha no cadastro:", error);
@@ -70,14 +65,11 @@ export function AuthProvider({ children }) {
       let userToUpdate;
 
       if (visualOnly) {
-        // Se for apenas visual, usa os dados recebidos diretamente
         userToUpdate = data;
       } else {
-        // Caso contrário, chama o serviço para atualizar os dados no backend
         userToUpdate = await updateUserProfile(data);
       }
       
-      // Atualiza o estado local e o AsyncStorage
       setUser(userToUpdate);
       await AsyncStorage.setItem("@auth:user", JSON.stringify(userToUpdate));
 
@@ -92,10 +84,8 @@ export function AuthProvider({ children }) {
     if (!user) throw new Error("Usuário não autenticado.");
 
     try {
-      // Chama o serviço para atualizar a moeda no backend
       await updateUserCurrency(user.id, currency);
 
-      // Atualiza o estado local e o AsyncStorage
       const updatedUser = { ...user, preferedCurrency: currency };
       setUser(updatedUser);
       await AsyncStorage.setItem("@auth:user", JSON.stringify(updatedUser));

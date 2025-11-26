@@ -5,13 +5,12 @@ const authApiService = axios.create({
   // Para o Emulador Android, use 10.0.2.2 para se conectar ao localhost do seu computador.
   // Se estiver usando um celular físico, substitua '10.0.2.2' pelo IP da sua máquina na rede.
   // Ex: baseURL: "http://192.168.1.10:8900"
-  baseURL: "http://192.168.100.134:8765", // Apontando para o API Gateway
+  baseURL: "http://localHost:8765",
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Interceptador para adicionar o token JWT em todas as requisições
 authApiService.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem("@auth:token");
@@ -40,7 +39,7 @@ export async function signup(name, email, password, currency, userType) {
     email: email.toLowerCase(),
     password,
     type: userType,
-    preferedCurrency: currency, // Tentando o padrão camelCase para o DTO Java
+    preferedCurrency: currency,
   });
   return response.data;
 }

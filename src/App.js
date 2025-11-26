@@ -10,8 +10,7 @@ import AuthStack from './routes/AuthStack';
 function AppRoutes() {
   const { user } = useAuth();
 
-  // Se o usuário estiver logado, renderiza as telas principais
-  // com todos os providers necessários.
+  // Se o usuário estiver logado, renderiza as telas principais com todos os providers necessários.
   if (user) {
     return (
       <InventoryProvider>

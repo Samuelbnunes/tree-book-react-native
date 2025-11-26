@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useContext, useCallback } fr
 import { useAuth } from './AuthContext';
 import {
   getInventory,
-  toggleFavoriteStatus as toggleFavoriteService, // Importação explícita e renomeada
+  toggleFavoriteStatus as toggleFavoriteService,
 } from '../services/InventoryService';
 
 const InventoryContext = createContext({});
@@ -51,7 +51,6 @@ export function InventoryProvider({ children }) {
       return newFavoriteStatus;
     } catch (error) {
       console.error("Erro ao alternar favorito no contexto:", error.response?.data || error.message);
-      // Re-lança o erro para que o componente que chamou possa tratá-lo, se necessário.
       throw error;
     }
   };

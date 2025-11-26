@@ -1,8 +1,10 @@
 import axios from "axios";
 
-// Instância do Axios para o serviço de produtos, apontando para o Gateway
 const productServiceApi = axios.create({
-  baseURL: "http://192.168.100.134:8765", // Apontando para o API Gateway
+  // Para o Emulador Android, use 10.0.2.2 para se conectar ao localhost do seu computador.
+  // Se estiver usando um celular físico, substitua '10.0.2.2' pelo IP da sua máquina na rede.
+  // Ex: baseURL: "http://192.168.1.10:8900"
+  baseURL: "http://localHost:8765",
   headers: {
     "Content-Type": "application/json",
   },
@@ -14,7 +16,6 @@ const productServiceApi = axios.create({
  */
 export async function getGenres() {
   const response = await productServiceApi.get('/products/tags');
-  // A API pode retornar os gêneros dentro da propriedade "content" ou diretamente
   return response.data?.content || response.data || [];
 }
 

@@ -14,7 +14,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { getBookList, getGenres } from '../services/BookService';
 import { useAuth } from '../context/AuthContext';
 import { useInventory } from '../context/InventoryContext';
-import { useImage } from '../context/ImageContext'; // Importa o hook do novo contexto
+import { useImage } from '../context/ImageContext';
 import GradientBackground from '../components/GradientBackground';
 import BookCarousel from '../components/Book/BookCarousel';
 
@@ -23,27 +23,27 @@ export default function BookList({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [genres, setGenres] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const { user, loading: authLoading } = useAuth(); // Pega o usuário e o status de loading do contexto
+  const { user, loading: authLoading } = useAuth();
   const { enrichBooksWithInventoryData } = useInventory();
-  const { preloadImages } = useImage(); // Pega a função de pré-carregamento
+  const { preloadImages } = useImage();
 
   useEffect(() => {
     if (!authLoading) {
       fetchSections();
     }
-  }, [authLoading, user]); // Re-executa quando o status de autenticação ou o usuário mudam
+  }, [authLoading, user]);
 
   async function fetchSections() {
     setLoading(true);
     try {
-      const userCurrency = user?.preferedCurrency || 'BRL'; // Usa a moeda do usuário ou 'BRL'
+      const userCurrency = user?.preferedCurrency || 'BRL';
 
       const genresData = await getGenres();
       setGenres(genresData);
 
       if (!genresData || genresData.length === 0) {
-        setSections([]); // Define as seções como vazias
-        return; // Interrompe a execução se não houver gêneros
+        setSections([]);
+        return;
       }
 
       const promises = genresData.map(genre =>

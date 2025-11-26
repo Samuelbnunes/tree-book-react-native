@@ -10,7 +10,7 @@ export default function Signup({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [currency, setCurrency] = useState("BRL"); // Estado para a moeda, com 'BRL' como padrão
+  const [currency, setCurrency] = useState("BRL");
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
 
@@ -24,7 +24,6 @@ export default function Signup({ navigation }) {
       return;
     }
 
-    // Adiciona uma verificação para a moeda
     if (!currency) {
       Alert.alert("Erro", "Por favor, selecione uma moeda preferida.");
       return;
@@ -32,15 +31,13 @@ export default function Signup({ navigation }) {
 
     setIsLoading(true);
     try {
-      await signup(name, email, password, currency, 1); // Passa o tipo de usuário como 1 (Leitor)
+      await signup(name, email, password, currency, 1);
       Alert.alert("Sucesso", "Cadastro realizado com sucesso.", [
         { text: "OK", onPress: () => navigation.navigate("Login") },
       ]);
     } catch (error) {
-      // Extrai a mensagem de erro da resposta da API, se disponível.
       const errorMessage = error.response?.data?.message || "Não foi possível cadastrar. Tente novamente.";
       
-      // Loga o erro completo no console para depuração.
       console.error("Falha no cadastro:", JSON.stringify(error.response?.data || error.message));
 
       Alert.alert("Erro no Cadastro", errorMessage);
@@ -91,7 +88,6 @@ export default function Signup({ navigation }) {
                 </View>
               </View>
 
-              {/* Ajuste de margem para acomodar o novo campo */}
               <View style={{ marginTop: 40 }}>
                 <ButtonPrimary title="Cadastrar" onPress={handleSignup} />
                 <TouchableOpacity onPress={() => navigation.navigate('Login')}>

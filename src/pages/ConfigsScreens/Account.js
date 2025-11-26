@@ -25,10 +25,8 @@ export default function Account({ navigation }) {
 
     setIsLoading(true);
     try {
-      // Simula a chamada à API com um pequeno atraso
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Atualiza o usuário localmente no contexto (sem chamada de API)
       await updateUser({ ...user, name, email }, true);
 
       navigation.navigate('ActionStatus', {
